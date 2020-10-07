@@ -55,6 +55,8 @@ class Dashboard extends Component {
       modalOpen: false,
       modalHeader: "",
       currentAddedLocation: "",
+      currentAddedProduct: [],
+      currentAddedDate: "",
     };
   }
 
@@ -121,14 +123,11 @@ class Dashboard extends Component {
     let productNames = products.map((product) => product.name);
     productNames.unshift("Please select");
     let locations = this.state.locations;
-
-    // let selectedDate = document.getElementById('date-input').value
-
+    let datePicker = document.getElementById("date-input");
     const validateDate = () => {
       const fullDate = new Date();
       const todayDate = fullDate.toISOString().slice(0, 10);
 
-      let datePicker = document.getElementById("date-input");
       let selectedDate = datePicker.value;
       let feedback = datePicker.nextElementSibling;
 
@@ -149,7 +148,6 @@ class Dashboard extends Component {
     };
 
     // console.log(productNames, this.state.locations);
-    let selectedProducts = [];
 
     // const updateProductList = (Productname) => {
 
@@ -168,24 +166,53 @@ class Dashboard extends Component {
     //   const mapParentStlye = modalChild.firstChild.style.position = 'relative';
     //   }
     // }
-    const locationclicked = (index) => {
-      console.log("locationClick", index);
+    // let selectedLocation= [] ;
+    const selectedLocationHandler = () => {
+      let locationNameText = document.querySelector(".location-name span");
+      let selectedLocation = this.state.currentAddedLocation;
+      if (selectedLocation) {
+        locationNameText.innerText = selectedLocation.name;
+        locationNameText.classList.add("selected");
+      } else {
+        locationNameText.innerText = "Please select a Place";
+        locationNameText.classList.remove("selected");
+      }
+    };
+    const locationClicked = (id) => {
+      let locationID = locations.findIndex((el) => el.id === id);
+      // selectedLocation = locations[locationID];
+      // console.log(selectedLocation)
       this.setState({
-        currentAddedLocation: index,
+        currentAddedLocation: locations[locationID],
         modalOpen: !this.state.modalOpen,
       });
-      console.log(this.state.currentAddedLocation);
-      selectedLocation();
+      selectedLocationHandler();
     };
 
-    const selectedLocation = () => {
-      const selectedID = this.state.currentAddedLocation;
-      let locationInfo = locations.findIndex((el) => el.id === selectedID);
-      console.log(locations[locationInfo]);
-      let locationName = document.querySelector(".location-name span");
-      locationName.innerText = locations[locationInfo].name;
-      locationName.classList.add("selected");
-      // locationName.
+    const selectedProductHandler = () => {
+      let selectedProductValue = document.querySelector("#select-product")
+        .value;
+      if (selectedProductValue && selectedProductValue !== "Please select") {
+        let productIndex = products.findIndex(
+          (el) => el.name === selectedProductValue
+        );
+        this.setState({ currentAddedProduct: products[productIndex] });
+      } else {
+        this.setState({ currentAddedProduct: [] });
+      }
+    };
+
+    const calcCost = () => {
+      let selectedProduct = this.state.currentAddedProduct;
+      let selectedLocation = this.state.currentAddedLocation;
+      let unitCount = document.getElementById("unitCount").value;
+      let productUnitCost = selectedProduct.price_per_unit * unitCount;
+      let shippingFee = selectedLocation.fee;
+      let lineCost = productUnitCost + shippingFee;
+      let selectedDate = datePicker.value;
+      console.log(selectedDate)
+
+      document.getElementById("unitCost").value = lineCost;
     };
     return (
       <CRow className="Mark Mark">
@@ -206,6 +233,7 @@ class Dashboard extends Component {
                     name="select"
                     id="select-product"
                     items={productNames}
+                    onChange={selectedProductHandler}
                   >
                     {productNames.map((product, i) => (
                       <option key={i} value={product}>
@@ -218,7 +246,9 @@ class Dashboard extends Component {
 
               <CFormGroup row>
                 <CCol md="3">
-                  <CLabel htmlFor="date-input">Date Input</CLabel>
+                  <CLabel className="" htmlFor="date-input">
+                    Date Input
+                  </CLabel>
                 </CCol>
                 <CCol xs="12" md="4">
                   <CInput
@@ -234,11 +264,15 @@ class Dashboard extends Component {
               </CFormGroup>
               <CFormGroup row>
                 <CCol md="3">
-                  <CLabel className="noMob" htmlFor="date-input">Location</CLabel>
+                  <CLabel className="noMob" htmlFor="date-input">
+                    Location
+                  </CLabel>
                 </CCol>
                 {/* clickable location added */}
                 <CCol xs="12" md="2">
-                  <CLabel className="place-list-h" htmlFor="date-input">Place</CLabel>
+                  <CLabel className="place-list-h" htmlFor="date-input">
+                    Place
+                  </CLabel>
                   <CLabel
                     className="location-name"
                     htmlFor="text-input"
@@ -251,15 +285,32 @@ class Dashboard extends Component {
                 {/* unit Count */}
 
                 <CCol xs="12" md="2">
-                  <CLabel className="place-list-h" htmlFor="unit-count">Unit Count</CLabel>
+                  <CLabel className="place-list-h" htmlFor="unit-count">
+                    Unit Count
+                  </CLabel>
                   <CInput
                     id="unitCount"
                     name="units"
                     placeholder="Units"
                     type="number"
+                    onChange={calcCost}
                   />
                 </CCol>
                 {/* /unit Count */}
+                {/* /units cost */}
+                <CCol xs="12" md="2">
+                  <CLabel className="place-list-h" htmlFor="date-input">
+                    Cost
+                  </CLabel>
+                  <CInput
+                    id="unitCost"
+                    name="cost"
+                    placeholder="Units"
+                    type="number"
+                    disabled
+                  />
+                </CCol>
+                {/* /units Cost */}
               </CFormGroup>
               <CFormGroup row>
                 <CCol md="3"></CCol>
@@ -306,7 +357,7 @@ class Dashboard extends Component {
                 </CModalHeader>
                 <CModalBody>
                   {this.state.modalOpen ? (
-                    <Map locations={locations} clicked={locationclicked} />
+                    <Map locations={locations} clicked={locationClicked} />
                   ) : (
                     ""
                   )}

@@ -30,6 +30,7 @@
     border-color: #d8dbe0;
     border-radius: 0.25rem;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    min-width: 168.5px;
 }
 .location-name span.selected {
     background-color: green;
@@ -45,11 +46,18 @@
         margin-right: 1em;
         min-width: 30%;
     }
-    .form-control {
+    .form-control{
         display: inline-block;
         width: auto;
        }
+       .form-control[type="date"]{
+        display: block;
+    width: 100%;
+       }
        .noMob {
            display: none;
+       }
+       .location-name span {
+        min-width: 183px;
        }
   }

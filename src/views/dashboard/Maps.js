@@ -90,17 +90,16 @@ function MyComponent(props) {
   //     );
   //   };
 
-  const updateIndex = (i, position) => {
-    console.log(i, position);
-    overlayIndex = i;
-    console.log(overlayIndex);
-    props.clicked(i);
+  const updateIndex = (id, position) => {
+    overlayIndex = id;
+    props.clicked(id);
 
     // overlayUpdate(position);
   };
 
   return (
-    <LoadScript googleMapsApiKey="AIzaSyCQMnvn-2c-_RjPos3YXb0UXXM3T5e8FU4">
+    <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}> 
+    {/* used .env file as no backend used in this project */}
       <GoogleMap
         mapContainerStyle={containerStyle}
         center={center}
