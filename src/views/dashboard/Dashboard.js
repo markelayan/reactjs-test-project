@@ -56,7 +56,12 @@ class Dashboard extends Component {
       modalHeader: "",
       currentAddedLocation: "",
       currentAddedProduct: [],
+      todayDate: "",
       currentAddedDate: "",
+      tomorrowDate: "",
+      next7Days: "",
+      daysDifference: "",
+      maxOrder: ""
     };
   }
 
@@ -100,6 +105,22 @@ class Dashboard extends Component {
           });
         }
       );
+
+    const fullDate = new Date();
+    const todayDate = fullDate.toISOString().slice(0, 10);
+    const tomorrow = new Date(fullDate);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const limit1Day = tomorrow.toISOString().slice(0, 10);
+
+    const next7Days = new Date(fullDate);
+    next7Days.setDate(next7Days.getDate() + 7);
+    const limit7Days = next7Days.toISOString().slice(0, 10);
+
+    this.setState({
+      todayDate: todayDate,
+      tomorrowDate: limit1Day,
+      next7Days: limit7Days,
+    });
   }
 
   render() {
@@ -124,49 +145,32 @@ class Dashboard extends Component {
     productNames.unshift("Please select");
     let locations = this.state.locations;
     let datePicker = document.getElementById("date-input");
-    const validateDate = () => {
-      const fullDate = new Date();
-      const todayDate = fullDate.toISOString().slice(0, 10);
 
+    const setSelectedDate = () => {
       let selectedDate = datePicker.value;
-      let feedback = datePicker.nextElementSibling;
-
-      if (!selectedDate) {
-        feedback.innerHTML = "Please select date";
-        this.setState({ datePickerClass: "is-invalid" });
-        feedback.classList.add("visible");
-      } else {
-        if (selectedDate <= todayDate) {
-          feedback.innerHTML = "This date is invalid!";
-          this.setState({ datePickerClass: "is-invalid" });
-          feedback.classList.add("visible");
-        } else {
-          this.setState({ datePickerClass: "" });
-          feedback.classList.remove("visible");
-        }
-      }
+      this.setState(
+        {
+          currentAddedDate: selectedDate,
+        },
+        calculateDates
+      );
     };
-
-    // console.log(productNames, this.state.locations);
-
-    // const updateProductList = (Productname) => {
-
-    //   return `<option value=${Productname}>${Productname}</option>`;
-
-    // };
+    const calculateDates = () => {
+      let today = new Date(this.state.todayDate);
+      let selected = new Date(this.state.currentAddedDate);
+      
+      let difference = selected - today;
+      const diffDays= Math.ceil(difference / (1000 * 60 * 60 * 24))
+      this.setState({
+        daysDifference: diffDays
+      })
+      
+    };
 
     const addProduct = () => {
       this.setState({ modalOpen: !this.state.modalOpen });
-      // adjustMapStyle()
     };
 
-    // const adjustMapStyle = () => {
-    //   if(this.state.modalOpen){
-    //   const modalChild = document.querySelector('.modal-body').firstChild;
-    //   const mapParentStlye = modalChild.firstChild.style.position = 'relative';
-    //   }
-    // }
-    // let selectedLocation= [] ;
     const selectedLocationHandler = () => {
       let locationNameText = document.querySelector(".location-name span");
       let selectedLocation = this.state.currentAddedLocation;
@@ -180,8 +184,7 @@ class Dashboard extends Component {
     };
     const locationClicked = (id) => {
       let locationID = locations.findIndex((el) => el.id === id);
-      // selectedLocation = locations[locationID];
-      // console.log(selectedLocation)
+  
       this.setState({
         currentAddedLocation: locations[locationID],
         modalOpen: !this.state.modalOpen,
@@ -210,7 +213,6 @@ class Dashboard extends Component {
       let shippingFee = selectedLocation.fee;
       let lineCost = productUnitCost + shippingFee;
       let selectedDate = datePicker.value;
-      console.log(selectedDate)
 
       document.getElementById("unitCost").value = lineCost;
     };
@@ -257,9 +259,11 @@ class Dashboard extends Component {
                     name="date-input"
                     placeholder="date"
                     className={this.state.datePickerClass}
-                    onChange={validateDate}
+                    onChange={setSelectedDate}
+                    title="you can select up to 7 days in advance."
+                    min={this.state.tomorrowDate}
+                    max={this.state.next7Days}
                   />
-                  <div className="invalidFeedback"> This date is not valid</div>
                 </CCol>
               </CFormGroup>
               <CFormGroup row>
@@ -294,6 +298,7 @@ class Dashboard extends Component {
                     placeholder="Units"
                     type="number"
                     onChange={calcCost}
+                    max=""
                   />
                 </CCol>
                 {/* /unit Count */}
