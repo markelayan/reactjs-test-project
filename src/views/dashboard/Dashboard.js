@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 import {
   CButton,
   CCard,
@@ -31,10 +31,17 @@ import {
   CRow,
   CBadge,
   CDataTable,
+  CModal,
+  CModalBody,
+  CModalFooter,
+  CModalHeader,
+  CModalTitle,
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
 import usersData from "../users/UsersData";
 import { render } from "enzyme";
+import Map from "./Maps";
+import { element } from "prop-types";
 
 class Dashboard extends Component {
   constructor(props) {
@@ -45,6 +52,9 @@ class Dashboard extends Component {
       products: [],
       locations: [],
       datePickerClass: "",
+      modalOpen: false,
+      modalHeader: "",
+      currentAddedLocation: "",
     };
   }
 
@@ -110,9 +120,11 @@ class Dashboard extends Component {
     let products = this.state.products;
     let productNames = products.map((product) => product.name);
     productNames.unshift("Please select");
+    let locations = this.state.locations;
+
     // let selectedDate = document.getElementById('date-input').value
 
-    const validate = () => {
+    const validateDate = () => {
       const fullDate = new Date();
       const todayDate = fullDate.toISOString().slice(0, 10);
 
@@ -146,12 +158,37 @@ class Dashboard extends Component {
     // };
 
     const addProduct = () => {
-      let selectedProduct = document.getElementById("select-product").value;
-      // console.log(selectedDate);
+      this.setState({ modalOpen: !this.state.modalOpen });
+      // adjustMapStyle()
     };
 
+    // const adjustMapStyle = () => {
+    //   if(this.state.modalOpen){
+    //   const modalChild = document.querySelector('.modal-body').firstChild;
+    //   const mapParentStlye = modalChild.firstChild.style.position = 'relative';
+    //   }
+    // }
+    const locationclicked = (index) => {
+      console.log("locationClick", index);
+      this.setState({
+        currentAddedLocation: index,
+        modalOpen: !this.state.modalOpen,
+      });
+      console.log(this.state.currentAddedLocation);
+      selectedLocation();
+    };
+
+    const selectedLocation = () => {
+      const selectedID = this.state.currentAddedLocation;
+      let locationInfo = locations.findIndex((el) => el.id === selectedID);
+      console.log(locations[locationInfo]);
+      let locationName = document.querySelector(".location-name span");
+      locationName.innerText = locations[locationInfo].name;
+      locationName.classList.add("selected");
+      // locationName.
+    };
     return (
-      <CRow>
+      <CRow className="Mark Mark">
         <CCol xs="12" md="12">
           <CCard>
             <CCardHeader>
@@ -190,10 +227,42 @@ class Dashboard extends Component {
                     name="date-input"
                     placeholder="date"
                     className={this.state.datePickerClass}
-                    onChange={validate}
+                    onChange={validateDate}
                   />
                   <div className="invalidFeedback"> This date is not valid</div>
                 </CCol>
+              </CFormGroup>
+              <CFormGroup row>
+                <CCol md="3">
+                  <CLabel className="noMob" htmlFor="date-input">Location</CLabel>
+                </CCol>
+                {/* clickable location added */}
+                <CCol xs="12" md="2">
+                  <CLabel className="place-list-h" htmlFor="date-input">Place</CLabel>
+                  <CLabel
+                    className="location-name"
+                    htmlFor="text-input"
+                    onClick={addProduct}
+                  >
+                    <span> Please select a Place </span>
+                  </CLabel>
+                </CCol>
+                {/* /clickable location added */}
+                {/* unit Count */}
+
+                <CCol xs="12" md="2">
+                  <CLabel className="place-list-h" htmlFor="unit-count">Unit Count</CLabel>
+                  <CInput
+                    id="unitCount"
+                    name="units"
+                    placeholder="Units"
+                    type="number"
+                  />
+                </CCol>
+                {/* /unit Count */}
+              </CFormGroup>
+              <CFormGroup row>
+                <CCol md="3"></CCol>
 
                 <CCol xs="12" md="4">
                   <button
@@ -201,11 +270,10 @@ class Dashboard extends Component {
                     className="btn btn-square btn-success"
                     onClick={addProduct}
                   >
-                    add
+                    Add to List
                   </button>
                 </CCol>
               </CFormGroup>
-
               <CRow>
                 {/* tables */}
 
@@ -226,6 +294,24 @@ class Dashboard extends Component {
                   />
                 </CCardBody>
               </CRow>
+
+              <CModal
+                id="ProductModal"
+                show={this.state.modalOpen}
+                onClose={addProduct}
+                size="xl"
+              >
+                <CModalHeader closeButton>
+                  <CModalTitle>Hover on location to see details</CModalTitle>
+                </CModalHeader>
+                <CModalBody>
+                  {this.state.modalOpen ? (
+                    <Map locations={locations} clicked={locationclicked} />
+                  ) : (
+                    ""
+                  )}
+                </CModalBody>
+              </CModal>
 
               {/* 
               <CForm
