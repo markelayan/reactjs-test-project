@@ -61,7 +61,7 @@ class Dashboard extends Component {
       tomorrowDate: "",
       next7Days: "",
       daysDifference: "",
-      maxOrder: ""
+      maxProduction: "",
     };
   }
 
@@ -158,15 +158,30 @@ class Dashboard extends Component {
     const calculateDates = () => {
       let today = new Date(this.state.todayDate);
       let selected = new Date(this.state.currentAddedDate);
-      
-      let difference = selected - today;
-      const diffDays= Math.ceil(difference / (1000 * 60 * 60 * 24))
-      this.setState({
-        daysDifference: diffDays
-      })
-      
-    };
 
+      let difference = selected - today;
+      const diffDays = Math.ceil(difference / (1000 * 60 * 60 * 24));
+      this.setState(
+        {
+          daysDifference: diffDays,
+        },
+        calculateMaxOrder
+      );
+    };
+    const calculateMaxOrder = () => {
+      let difDays = this.state.daysDifference;
+      let maxProductionArray = this.state.currentAddedProduct.max_production;
+      let maxProduction = "";
+
+      for (let i = 0; i < maxProductionArray.length; i++) {
+        if (difDays == i) {
+          maxProduction = maxProductionArray[i];
+        }
+      }
+      this.setState({
+        maxProduction: maxProduction,
+      });
+    };
     const addProduct = () => {
       this.setState({ modalOpen: !this.state.modalOpen });
     };
@@ -174,6 +189,7 @@ class Dashboard extends Component {
     const selectedLocationHandler = () => {
       let locationNameText = document.querySelector(".location-name span");
       let selectedLocation = this.state.currentAddedLocation;
+      console.log(selectedLocation);
       if (selectedLocation) {
         locationNameText.innerText = selectedLocation.name;
         locationNameText.classList.add("selected");
@@ -183,25 +199,31 @@ class Dashboard extends Component {
       }
     };
     const locationClicked = (id) => {
+      console.log(id);
       let locationID = locations.findIndex((el) => el.id === id);
-  
-      this.setState({
-        currentAddedLocation: locations[locationID],
-        modalOpen: !this.state.modalOpen,
-      });
-      selectedLocationHandler();
+
+      this.setState(
+        {
+          currentAddedLocation: locations[locationID],
+          modalOpen: !this.state.modalOpen,
+        },
+        selectedLocationHandler
+      );
     };
 
     const selectedProductHandler = () => {
       let selectedProductValue = document.querySelector("#select-product")
         .value;
+
       if (selectedProductValue && selectedProductValue !== "Please select") {
         let productIndex = products.findIndex(
           (el) => el.name === selectedProductValue
         );
+        datePicker.disabled = false;
         this.setState({ currentAddedProduct: products[productIndex] });
       } else {
         this.setState({ currentAddedProduct: [] });
+        datePicker.disabled = true;
       }
     };
 
@@ -217,7 +239,7 @@ class Dashboard extends Component {
       document.getElementById("unitCost").value = lineCost;
     };
     return (
-      <CRow className="Mark Mark">
+      <CRow>
         <CCol xs="12" md="12">
           <CCard>
             <CCardHeader>
@@ -263,6 +285,7 @@ class Dashboard extends Component {
                     title="you can select up to 7 days in advance."
                     min={this.state.tomorrowDate}
                     max={this.state.next7Days}
+                    disabled
                   />
                 </CCol>
               </CFormGroup>
@@ -298,7 +321,8 @@ class Dashboard extends Component {
                     placeholder="Units"
                     type="number"
                     onChange={calcCost}
-                    max=""
+                    max="0"
+                    disabled
                   />
                 </CCol>
                 {/* /unit Count */}

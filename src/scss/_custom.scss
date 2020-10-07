@@ -1,63 +1,71 @@
 // Here you can add other styles
 
 .invalidFeedback {
-    display: none;
-    color: red;
+  display: none;
+  color: red;
 }
 
 .visible {
-    display: block;
-    
+  display: block;
 }
 
-.modal-body{
-    padding:0;
+.modal-body {
+  padding: 0;
 }
 
 .location-name span {
-    background-color: #d8dbe0;
-    opacity: 1;
-    display: block;
-    width: 100%;
-    height: calc(1.5em + 0.75rem + 2px);
-    padding: 0.375rem 0.75rem;
-    font-size: 0.875rem;
-    font-weight: 400;
-    line-height: 1.5;
-    background-clip: padding-box;
-    border: 1px solid;
-    color: #768192;
-    border-color: #d8dbe0;
-    border-radius: 0.25rem;
-    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-    min-width: 168.5px;
+  background-color: #d8dbe0;
+  opacity: 1;
+  display: block;
+  width: 100%;
+  height: calc(1.5em + 0.75rem + 2px);
+  padding: 0.375rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 400;
+  line-height: 1.5;
+  background-clip: padding-box;
+  border: 1px solid;
+  color: #768192;
+  border-color: #d8dbe0;
+  border-radius: 0.25rem;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+  min-width: 168.5px;
 }
 .location-name span.selected {
-    background-color: green;
-    color: white;
+  background-color: green;
+  color: white;
 }
 
-.place-list-h{
-    font-weight: 700;
+.place-list-h {
+  font-weight: 700;
 }
 
 @media only screen and (max-width: 600px) {
-    .place-list-h{
-        margin-right: 1em;
-        min-width: 30%;
-    }
-    .form-control{
-        display: inline-block;
-        width: auto;
-       }
-       .form-control[type="date"]{
-        display: block;
-    width: 100%;
-       }
-       .noMob {
-           display: none;
-       }
-       .location-name span {
-        min-width: 183px;
-       }
+  .place-list-h {
+    margin-right: 1em;
+    min-width: 30%;
   }
+  .form-control {
+    display: inline-block;
+    width: auto;
+  }
+  .form-control[type="date"] {
+    display: block;
+    width: 100%;
+  }
+  .noMob {
+    display: none;
+  }
+  .location-name span {
+    min-width: 183px;
+  }
+}
+
+.hidden {
+    display: none;
+}
+.infoWindow-info p {
+    font-size: 12px;
+    margin: 0;
+    padding: 0;
+}
