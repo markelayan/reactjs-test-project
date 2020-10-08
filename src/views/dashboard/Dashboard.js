@@ -64,7 +64,10 @@ class Dashboard extends Component {
       maxProduction: "",
       currentMaxDist: "",
       currentLineCost: "",
-      cartProducts: [],
+      cartProduct: [],
+      cartLocations: [],
+      totalUnits: 0,
+      totalCost: 0,
     };
   }
 
@@ -167,10 +170,11 @@ class Dashboard extends Component {
         calculateMaxOrder
       );
     };
+    const locationNameHolder = document.getElementById("location-name");
     const calculateMaxOrder = () => {
-      const locationEnabled = document.getElementById("location-name");
-      locationEnabled.onclick = openProductModal;
-      locationEnabled.firstChild.classList.add("not-selected");
+      locationNameHolder.firstChild.classList.add("not-selected");
+
+      locationNameHolder.onclick = openProductModal;
       let difDays = this.state.daysDifference;
       let maxProductionArray = this.state.currentAddedProduct.max_production;
       let maxProduction = "";
@@ -188,22 +192,29 @@ class Dashboard extends Component {
       this.setState({ modalOpen: !this.state.modalOpen });
     };
 
-    const selectedLocationHandler = () => {
+    const unitCountInput = document.getElementById("unitCount");
+
+    const selectedLocationHandler = (status) => {
       let locationNameText = document.querySelector(".location-name span");
       let selectedLocation = this.state.currentAddedLocation;
-      console.log(this.state.currentMaxDist);
-      console.log(selectedLocation);
-      if (selectedLocation) {
+
+      if (selectedLocation || status == true) {
+        toggleProductSelect(false);
+        toggleDatePicker(false);
         locationNameText.innerText = selectedLocation.name;
         locationNameText.classList.add("selected");
         locationNameText.classList.remove("not-selected");
-        document.getElementById("unitCount").disabled = false;
+        toggleUnitCountInput(true);
       } else {
+        toggleProductSelect(true);
+        toggleDatePicker(true);
         locationNameText.innerText = "Please select a Place";
         locationNameText.classList.remove("selected");
         locationNameText.classList.add("not-selected");
+        toggleUnitCountInput(false);
       }
     };
+
     const locationClicked = (id) => {
       console.log(id);
       let locationID = locations.findIndex((el) => el.id === id);
@@ -218,36 +229,33 @@ class Dashboard extends Component {
         selectedLocationHandler
       );
     };
-
+    let productSelect = document.querySelector("#select-product");
     const selectedProductHandler = () => {
-      let selectedProductValue = document.querySelector("#select-product")
-        .value;
+      let selectedProductValue = productSelect.value;
 
       if (selectedProductValue && selectedProductValue !== "Please select") {
         let productIndex = products.findIndex(
           (el) => el.name === selectedProductValue
         );
-        datePicker.disabled = false;
+        toggleDatePicker(true);
         this.setState({ currentAddedProduct: products[productIndex] });
       } else {
+        toggleDatePicker(false);
         this.setState({ currentAddedProduct: [] });
-        datePicker.disabled = true;
       }
     };
+    let unitCost = document.getElementById("unitCost");
 
     const calcCost = () => {
       let maxDistValue = this.state.currentMaxDist;
-      let unitCount = document.getElementById("unitCount");
-      let unitCost = document.getElementById("unitCost");
-
-      let unitCountValue = unitCount.value;
+      let unitCountValue = unitCountInput.value;
       let selectedProduct = this.state.currentAddedProduct;
       let selectedLocation = this.state.currentAddedLocation;
       let selectedDate = datePicker.value;
       let productUnitCost = selectedProduct.price_per_unit * unitCountValue;
       let shippingFee = selectedLocation.fee;
       let lineCost = productUnitCost + shippingFee;
-        
+
       if (
         maxDistValue &&
         unitCountValue <= maxDistValue &&
@@ -256,13 +264,12 @@ class Dashboard extends Component {
         unitCost.value = lineCost;
 
         this.setState(
-          { currentLineCost: lineCost, 
-            currentUnitCount: unitCountValue },
+          { currentLineCost: lineCost, currentUnitCount: unitCountValue },
           preFinalChecks
         );
       } else {
         unitCountValue = maxDistValue;
-        unitCount.value = unitCountValue;
+        unitCountInput.value = unitCountValue;
         selectedProduct = this.state.currentAddedProduct;
         selectedLocation = this.state.currentAddedLocation;
         selectedDate = datePicker.value;
@@ -270,7 +277,7 @@ class Dashboard extends Component {
         shippingFee = selectedLocation.fee;
         lineCost = productUnitCost + shippingFee;
         unitCost.value = lineCost;
-        toggleAddBtn(false)
+        toggleAddBtn(false);
         this.setState(
           { currentLineCost: lineCost, currentUnitCount: unitCountValue },
           alert(
@@ -286,12 +293,12 @@ class Dashboard extends Component {
       let date = this.state.currentAddedDate;
       let place = this.state.currentAddedLocation;
       let lineCost = this.state.currentLineCost;
-      let unitCountValue = this.state.currentUnitCount
-      if (unitCountValue && unitCountValue ==0){
-        unitCountValue = false
+      let unitCountValue = this.state.currentUnitCount;
+      if (unitCountValue && unitCountValue == 0) {
+        unitCountValue = false;
       }
       let status = false;
-      if (product && date && place && lineCost && unitCountValue ) {
+      if (product && date && place && lineCost && unitCountValue) {
         status = true;
       } else {
         status = false;
@@ -303,40 +310,81 @@ class Dashboard extends Component {
       let addBtn = document.getElementById("addBtn");
 
       if (status == true) {
-        console.log('not disabled')
         addBtn.disabled = false;
         addBtn.onclick = addItemstoCart;
         addBtn.classList.add("btn-success");
         addBtn.classList.remove("btn-secondary");
       } else {
-        console.log('now disabled')
         addBtn.disabled = true;
         addBtn.onclick = null;
         addBtn.classList.add("btn-secondary");
         addBtn.classList.remove("btn-success");
       }
     };
+
+    const togglePlaceNameHolder = () => {
+      let locationNameText = document.querySelector(".location-name span");
+      // toggleProductSelect(true);
+      // toggleDatePicker(true);
+      locationNameText.innerText = "Please select a Place";
+      locationNameText.classList = "not-selected";
+
+      toggleUnitCountInput(false);
+    };
+
+    const toggleProductSelect = (status) => {
+      if (status) {
+        productSelect.disabled = false;
+      } else {
+        productSelect.disabled = true;
+      }
+    };
+    const toggleDatePicker = (status) => {
+      if (status) {
+        datePicker.disabled = false;
+      } else {
+        datePicker.disabled = true;
+      }
+    };
+
+    const toggleUnitCountInput = (status) => {
+      if (status) {
+        unitCountInput.disabled = false;
+      } else {
+        unitCountInput.disabled = true;
+      }
+    };
+
     let productsTable = document.querySelector("#productsTable tbody");
+
     const addItemstoCart = () => {
       let product = this.state.currentAddedProduct;
       let date = this.state.currentAddedDate;
       let place = this.state.currentAddedLocation;
       let lineCost = this.state.currentLineCost;
-      let unitCount = this.state.currentUnitCount;
+      let currentUnitCount = this.state.currentUnitCount;
+      let cartProductsInfo = this.state.cartProduct;
+      let cartLocations = this.state.cartLocations;
+      let totalUnits = this.state.totalUnits;
+      let totalCost = this.state.totalCost;
+      console.log(cartLocations);
+
       let productInfo = [
         date,
         product.name,
         place.name,
-        unitCount,
+        currentUnitCount,
         lineCost,
         "X",
       ];
+      let newTotalUnits = parseInt(totalUnits) + parseInt(currentUnitCount);
+      let newTotalCost = parseInt(totalCost) + parseInt(lineCost);
 
       let newProductAddedTR = document.createElement("tr");
       newProductAddedTR.id = `product${product.id}`;
-      // newProductAddedTR.onclick = removeSelectedProduct.bind(this,product.id)
       productsTable.append(newProductAddedTR);
-      let allInfo = productInfo.map((info) => {
+
+      productInfo.map((info) => {
         let td = document.createElement("td");
         td.innerHTML = `<span>${info}</span>`;
         if (info === "X") {
@@ -346,10 +394,60 @@ class Dashboard extends Component {
         newProductAddedTR.append(td);
       });
 
-      clearSelectedValues();
+      cartLocations.push({ id: place.id, quantity: currentUnitCount });
+      console.log();
+      if (cartProductsInfo.length == 0) {
+        this.setState(
+          {
+            totalCost: newTotalCost,
+            totalUnits: newTotalUnits,
+            cartLocations: cartLocations,
+            cartProduct: [{ date: date, product: product.id }],
+          },
+          prepareAnotherProduct
+        );
+      } else {
+        this.setState(
+          {
+            totalCost: newTotalCost,
+            totalUnits: newTotalUnits,
+            cartLocations: cartLocations,
+          },
+          prepareAnotherProduct
+        );
+      }
     };
 
+    const prepareAnotherProduct = () => {
+      console.log(this.state.cartProduct);
+      toggleProductSelect(false);
+
+      toggleDatePicker(false);
+
+      togglePlaceNameHolder();
+      toggleUnitCountInput(false);
+      unitCountInput.value = "";
+
+      unitCost.value = "";
+      toggleAddBtn(false);
+      this.setState({
+        currentAddedLocation: "",
+        currentMaxDist: "",
+        currentLineCost: "",
+      });
+    };
     const clearSelectedValues = () => {
+      toggleProductSelect(true);
+      productSelect.selectedIndex = 0;
+
+      toggleDatePicker(false);
+      datePicker.value = "";
+
+      togglePlaceNameHolder();
+      toggleUnitCountInput(false);
+      unitCountInput.value = "";
+
+      unitCost.value = "";
       toggleAddBtn(false);
       this.setState({
         currentAddedLocation: "",
@@ -359,6 +457,7 @@ class Dashboard extends Component {
         maxProduction: "",
         currentMaxDist: "",
         currentLineCost: "",
+        cartProducts: [],
       });
     };
 
@@ -447,8 +546,6 @@ class Dashboard extends Component {
                     id="unitCount"
                     name="units"
                     placeholder="Units"
-                    
-
                     type="number"
                     onChange={calcCost}
                     max={this.state.currentMaxDist}
@@ -475,7 +572,7 @@ class Dashboard extends Component {
               <CFormGroup row>
                 <CCol md="3"></CCol>
 
-                <CCol xs="12" md="4">
+                <CCol xs="12" md="2" className="mr-2">
                   <button
                     type="button"
                     id="addBtn"
@@ -485,6 +582,7 @@ class Dashboard extends Component {
                     Add to Cart
                   </button>
                 </CCol>
+                <CCol xs="12" md="2"></CCol>
               </CFormGroup>
               <CRow>
                 {/* tables */}
@@ -508,7 +606,51 @@ class Dashboard extends Component {
                   </div>
                 </CCardBody>
               </CRow>
-
+              {/* / table */}
+              {/* Totals */}
+              <CFormGroup row>
+                <CCol md="2">
+                  <CLabel  htmlFor="date-input">
+                    <b>Total Units:</b> 
+                  </CLabel>
+                </CCol>
+                {/* clickable location added */}
+                <CCol xs="12" md="2">
+                  <CLabel >
+                    {this.state.totalUnits}
+                  </CLabel>
+                  <CLabel
+                    id="totalUnits"
+                    htmlFor="text-input"
+                  >
+                  </CLabel>
+                </CCol>
+                {/* /clickable location added */}
+                
+                
+              </CFormGroup>
+              <CFormGroup row>
+                <CCol md="2">
+                  <CLabel  htmlFor="date-input">
+                    <b>Total Cost:</b> 
+                  </CLabel>
+                </CCol>
+                {/* clickable location added */}
+                <CCol xs="12" md="2">
+                  <CLabel >
+                    {this.state.totalCost}
+                  </CLabel>
+                  <CLabel
+                    id="totalUnits"
+                    htmlFor="text-input"
+                  >
+                  </CLabel>
+                </CCol>
+                {/* /clickable location added */}
+                
+                
+              </CFormGroup>
+              {/* Totals */}
               <CModal
                 id="ProductModal"
                 show={this.state.modalOpen}
@@ -526,376 +668,17 @@ class Dashboard extends Component {
                   )}
                 </CModalBody>
               </CModal>
-
-              {/* 
-              <CForm
-                action=""
-                method="post"
-                encType="multipart/form-data"
-                className="form-horizontal"
-              >
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel>Static</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <p className="form-control-static">Username</p>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="text-input">Text Input</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CInput
-                      id="text-input"
-                      name="text-input"
-                      placeholder="Text"
-                    />
-                    <CFormText>This is a help text</CFormText>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="email-input">Email Input</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CInput
-                      type="email"
-                      id="email-input"
-                      name="email-input"
-                      placeholder="Enter Email"
-                      autoComplete="email"
-                    />
-                    <CFormText className="help-block">
-                      Please enter your email
-                    </CFormText>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="password-input">Password</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CInput
-                      type="password"
-                      id="password-input"
-                      name="password-input"
-                      placeholder="Password"
-                      autoComplete="new-password"
-                    />
-                    <CFormText className="help-block">
-                      Please enter a complex password
-                    </CFormText>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="date-input">Date Input</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CInput
-                      type="date"
-                      id="date-input"
-                      name="date-input"
-                      placeholder="date"
-                    />
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="disabled-input">Disabled Input</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CInput
-                      id="disabled-input"
-                      name="disabled-input"
-                      placeholder="Disabled"
-                      disabled
-                    />
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="textarea-input">Textarea</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CTextarea
-                      name="textarea-input"
-                      id="textarea-input"
-                      rows="9"
-                      placeholder="Content..."
-                    />
-                  </CCol>
-                </CFormGroup>
-
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="selectLg">Select Large</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9" size="lg">
-                    <CSelect custom size="lg" name="selectLg" id="selectLg">
-                      <option value="0">Please select</option>
-                      <option value="1">Option #1</option>
-                      <option value="2">Option #2</option>
-                      <option value="3">Option #3</option>
-                    </CSelect>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="selectSm">Select Small</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CSelect custom size="sm" name="selectSm" id="SelectLm">
-                      <option value="0">Please select</option>
-                      <option value="1">Option #1</option>
-                      <option value="2">Option #2</option>
-                      <option value="3">Option #3</option>
-                      <option value="4">Option #4</option>
-                      <option value="5">Option #5</option>
-                    </CSelect>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel htmlFor="disabledSelect">Disabled Select</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CSelect
-                      custom
-                      name="disabledSelect"
-                      id="disabledSelect"
-                      disabled
-                      autoComplete="name"
-                    >
-                      <option value="0">Please select</option>
-                      <option value="1">Option #1</option>
-                      <option value="2">Option #2</option>
-                      <option value="3">Option #3</option>
-                    </CSelect>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel>Radios</CLabel>
-                  </CCol>
-                  <CCol md="9">
-                    <CFormGroup variant="checkbox">
-                      <CInputRadio
-                        className="form-check-input"
-                        id="radio1"
-                        name="radios"
-                        value="option1"
-                      />
-                      <CLabel variant="checkbox" htmlFor="radio1">
-                        Option 1
-                      </CLabel>
-                    </CFormGroup>
-                    <CFormGroup variant="checkbox">
-                      <CInputRadio
-                        className="form-check-input"
-                        id="radio2"
-                        name="radios"
-                        value="option2"
-                      />
-                      <CLabel variant="checkbox" htmlFor="radio2">
-                        Option 2
-                      </CLabel>
-                    </CFormGroup>
-                    <CFormGroup variant="checkbox">
-                      <CInputRadio
-                        className="form-check-input"
-                        id="radio3"
-                        name="radios"
-                        value="option3"
-                      />
-                      <CLabel variant="checkbox" htmlFor="radio3">
-                        Option 3
-                      </CLabel>
-                    </CFormGroup>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel>Inline Radios</CLabel>
-                  </CCol>
-                  <CCol md="9">
-                    <CFormGroup variant="custom-radio" inline>
-                      <CInputRadio
-                        custom
-                        id="inline-radio1"
-                        name="inline-radios"
-                        value="option1"
-                      />
-                      <CLabel variant="custom-checkbox" htmlFor="inline-radio1">
-                        One
-                      </CLabel>
-                    </CFormGroup>
-                    <CFormGroup variant="custom-radio" inline>
-                      <CInputRadio
-                        custom
-                        id="inline-radio2"
-                        name="inline-radios"
-                        value="option2"
-                      />
-                      <CLabel variant="custom-checkbox" htmlFor="inline-radio2">
-                        Two
-                      </CLabel>
-                    </CFormGroup>
-                    <CFormGroup variant="custom-radio" inline>
-                      <CInputRadio
-                        custom
-                        id="inline-radio3"
-                        name="inline-radios"
-                        value="option3"
-                      />
-                      <CLabel variant="custom-checkbox" htmlFor="inline-radio3">
-                        Three
-                      </CLabel>
-                    </CFormGroup>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel>Checkboxes</CLabel>
-                  </CCol>
-                  <CCol md="9">
-                    <CFormGroup variant="checkbox" className="checkbox">
-                      <CInputCheckbox
-                        id="checkbox1"
-                        name="checkbox1"
-                        value="option1"
-                      />
-                      <CLabel
-                        variant="checkbox"
-                        className="form-check-label"
-                        htmlFor="checkbox1"
-                      >
-                        Option 1
-                      </CLabel>
-                    </CFormGroup>
-                    <CFormGroup variant="checkbox" className="checkbox">
-                      <CInputCheckbox
-                        id="checkbox2"
-                        name="checkbox2"
-                        value="option2"
-                      />
-                      <CLabel
-                        variant="checkbox"
-                        className="form-check-label"
-                        htmlFor="checkbox2"
-                      >
-                        Option 2
-                      </CLabel>
-                    </CFormGroup>
-                    <CFormGroup variant="checkbox" className="checkbox">
-                      <CInputCheckbox
-                        id="checkbox3"
-                        name="checkbox3"
-                        value="option3"
-                      />
-                      <CLabel
-                        variant="checkbox"
-                        className="form-check-label"
-                        htmlFor="checkbox3"
-                      >
-                        Option 3
-                      </CLabel>
-                    </CFormGroup>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel>Inline Checkboxes</CLabel>
-                  </CCol>
-                  <CCol md="9">
-                    <CFormGroup variant="custom-checkbox" inline>
-                      <CInputCheckbox
-                        custom
-                        id="inline-checkbox1"
-                        name="inline-checkbox1"
-                        value="option1"
-                      />
-                      <CLabel
-                        variant="custom-checkbox"
-                        htmlFor="inline-checkbox1"
-                      >
-                        One
-                      </CLabel>
-                    </CFormGroup>
-                    <CFormGroup variant="custom-checkbox" inline>
-                      <CInputCheckbox
-                        custom
-                        id="inline-checkbox2"
-                        name="inline-checkbox2"
-                        value="option2"
-                      />
-                      <CLabel
-                        variant="custom-checkbox"
-                        htmlFor="inline-checkbox2"
-                      >
-                        Two
-                      </CLabel>
-                    </CFormGroup>
-                    <CFormGroup variant="custom-checkbox" inline>
-                      <CInputCheckbox
-                        custom
-                        id="inline-checkbox3"
-                        name="inline-checkbox3"
-                        value="option3"
-                      />
-                      <CLabel
-                        variant="custom-checkbox"
-                        htmlFor="inline-checkbox3"
-                      >
-                        Three
-                      </CLabel>
-                    </CFormGroup>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CLabel col md="3" htmlFor="file-input">
-                    File input
-                  </CLabel>
-                  <CCol xs="12" md="9">
-                    <CInputFile id="file-input" name="file-input" />
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CCol md="3">
-                    <CLabel>Multiple File input</CLabel>
-                  </CCol>
-                  <CCol xs="12" md="9">
-                    <CInputFile
-                      id="file-multiple-input"
-                      name="file-multiple-input"
-                      multiple
-                      custom
-                    />
-                    <CLabel htmlFor="file-multiple-input" variant="custom-file">
-                      Choose Files...
-                    </CLabel>
-                  </CCol>
-                </CFormGroup>
-                <CFormGroup row>
-                  <CLabel col md={3}>
-                    Custom file input
-                  </CLabel>
-                  <CCol xs="12" md="9">
-                    <CInputFile custom id="custom-file-input" />
-                    <CLabel htmlFor="custom-file-input" variant="custom-file">
-                      Choose file...
-                    </CLabel>
-                  </CCol>
-                </CFormGroup>
-              </CForm> */}
             </CCardBody>
             <CCardFooter>
               <CButton type="submit" size="sm" color="primary">
                 <CIcon name="cil-scrubber" /> Submit
               </CButton>
-              <CButton type="reset" size="sm" color="danger">
+              <CButton
+                type="reset"
+                size="sm"
+                color="danger"
+                onClick={clearSelectedValues}
+              >
                 <CIcon name="cil-ban" /> Reset
               </CButton>
             </CCardFooter>
