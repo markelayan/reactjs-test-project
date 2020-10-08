@@ -54,18 +54,17 @@ class Dashboard extends Component {
       datePickerClass: "",
       modalOpen: false,
       modalHeader: "",
-      currentAddedLocation: "",
-      currentAddedProduct: [],
       todayDate: "",
-      currentAddedDate: "",
       tomorrowDate: "",
       next7Days: "",
+      currentAddedLocation: "",
+      currentAddedProduct: [],
+      currentAddedDate: "",
       daysDifference: "",
       maxProduction: "",
       currentMaxDist: "",
       currentLineCost: "",
       cartProducts: [],
-      enableAddBtn: false,
     };
   }
 
@@ -99,7 +98,7 @@ class Dashboard extends Component {
             locations: locations,
           });
         },
-               
+
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
         // exceptions from actual bugs in components.
@@ -109,8 +108,7 @@ class Dashboard extends Component {
             error,
           });
         },
-        document.getElementById('loadSpinner').classList.remove('visible')
-
+        document.getElementById("loadSpinner").classList.remove("visible")
       );
 
     const fullDate = new Date();
@@ -128,12 +126,9 @@ class Dashboard extends Component {
       tomorrowDate: limit1Day,
       next7Days: limit7Days,
     });
-   
   }
 
   render() {
-
-  
     const fields = ["Product", "Place", "units", "cost "];
 
     let products = this.state.products;
@@ -243,7 +238,6 @@ class Dashboard extends Component {
     const calcCost = () => {
       let maxDistValue = this.state.currentMaxDist;
       let unitCount = document.getElementById("unitCount");
-
       let unitCost = document.getElementById("unitCost");
 
       let unitCountValue = unitCount.value;
@@ -253,7 +247,7 @@ class Dashboard extends Component {
       let productUnitCost = selectedProduct.price_per_unit * unitCountValue;
       let shippingFee = selectedLocation.fee;
       let lineCost = productUnitCost + shippingFee;
-      let addBtn = document.getElementById("addBtn");
+        
       if (
         maxDistValue &&
         unitCountValue <= maxDistValue &&
@@ -262,7 +256,8 @@ class Dashboard extends Component {
         unitCost.value = lineCost;
 
         this.setState(
-          { currentLineCost: lineCost, currentUnitCount: unitCountValue },
+          { currentLineCost: lineCost, 
+            currentUnitCount: unitCountValue },
           preFinalChecks
         );
       } else {
@@ -275,6 +270,7 @@ class Dashboard extends Component {
         shippingFee = selectedLocation.fee;
         lineCost = productUnitCost + shippingFee;
         unitCost.value = lineCost;
+        toggleAddBtn(false)
         this.setState(
           { currentLineCost: lineCost, currentUnitCount: unitCountValue },
           alert(
@@ -290,53 +286,88 @@ class Dashboard extends Component {
       let date = this.state.currentAddedDate;
       let place = this.state.currentAddedLocation;
       let lineCost = this.state.currentLineCost;
+      let unitCountValue = this.state.currentUnitCount
+      if (unitCountValue && unitCountValue ==0){
+        unitCountValue = false
+      }
+      let status = false;
+      if (product && date && place && lineCost && unitCountValue ) {
+        status = true;
+      } else {
+        status = false;
+      }
+      toggleAddBtn(status);
+    };
+
+    const toggleAddBtn = (status) => {
       let addBtn = document.getElementById("addBtn");
-      if (product && date && place && lineCost) {
+
+      if (status == true) {
+        console.log('not disabled')
         addBtn.disabled = false;
         addBtn.onclick = addItemstoCart;
         addBtn.classList.add("btn-success");
         addBtn.classList.remove("btn-secondary");
       } else {
+        console.log('now disabled')
         addBtn.disabled = true;
         addBtn.onclick = null;
         addBtn.classList.add("btn-secondary");
         addBtn.classList.remove("btn-success");
       }
     };
+    let productsTable = document.querySelector("#productsTable tbody");
     const addItemstoCart = () => {
       let product = this.state.currentAddedProduct;
       let date = this.state.currentAddedDate;
       let place = this.state.currentAddedLocation;
       let lineCost = this.state.currentLineCost;
       let unitCount = this.state.currentUnitCount;
-      let productInfo = [date, product.name, place.name,unitCount, lineCost];
-      const productsTable = document.querySelector("table tbody");
+      let productInfo = [
+        date,
+        product.name,
+        place.name,
+        unitCount,
+        lineCost,
+        "X",
+      ];
+
       let newProductAddedTR = document.createElement("tr");
-      newProductAddedTR.id = product.id;
+      newProductAddedTR.id = `product${product.id}`;
+      // newProductAddedTR.onclick = removeSelectedProduct.bind(this,product.id)
       productsTable.append(newProductAddedTR);
-      console.log(productInfo);
       let allInfo = productInfo.map((info) => {
         let td = document.createElement("td");
-        td.innerText = info;
+        td.innerHTML = `<span>${info}</span>`;
+        if (info === "X") {
+          td.classList.add("removeBtn");
+          td.onclick = removeSelectedProduct.bind(null, newProductAddedTR.id);
+        }
         newProductAddedTR.append(td);
       });
 
-      //   const movieList = document.getElementById("movie-list");
-      //   const newMovieEl = document.createElement("li");
-      //   newMovieEl.className = "movie-element";
-      //   newMovieEl.innerHTML = `
-      // <div class='movie-element__image'>
-      // <img src='${img}' >
-      // </div>
-      // <div class='movie-element__info'>
-      // <h2>${name}</h2>
-      // <p>${rating}/5</p>
-      // </div>`;
-      //   movieList.append(newMovieEl);
+      clearSelectedValues();
+    };
+
+    const clearSelectedValues = () => {
+      toggleAddBtn(false);
+      this.setState({
+        currentAddedLocation: "",
+        currentAddedProduct: [],
+        currentAddedDate: "",
+        daysDifference: "",
+        maxProduction: "",
+        currentMaxDist: "",
+        currentLineCost: "",
+      });
+    };
+
+    const removeSelectedProduct = (id) => {
+      let productToRemove = document.getElementById(id);
+      productToRemove.remove();
     };
     return (
       <CRow>
-       
         <CCol xs="12" md="12">
           <CCard>
             <CCardHeader>
@@ -416,10 +447,12 @@ class Dashboard extends Component {
                     id="unitCount"
                     name="units"
                     placeholder="Units"
+                    
+
                     type="number"
                     onChange={calcCost}
                     max={this.state.currentMaxDist}
-                    min="0"
+                    min="1"
                     disabled
                   />
                 </CCol>
@@ -466,6 +499,7 @@ class Dashboard extends Component {
                           <th scope="col">Location</th>
                           <th scope="col">Unit Count</th>
                           <th scope="col">Cost</th>
+                          <th scope="col">Remove</th>
                         </tr>
                       </thead>
 

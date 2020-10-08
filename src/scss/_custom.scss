@@ -99,3 +99,14 @@
       transform: rotate(359deg);
     }
   }
+
+  .removeBtn span {
+    padding: 0px 7px;
+    text-decoration: none;
+    color: #fff;
+    font-weight: bold;
+    background-color: #b80c0c;
+    /* padding: 2px 9px; */
+    font-size: 14px;
+    -webkit-border-radius: 5px;
+  }
