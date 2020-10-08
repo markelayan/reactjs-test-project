@@ -6,7 +6,7 @@
 }
 
 .visible {
-  display: block;
+  display: block !important;
 }
 
 .modal-body {
@@ -69,3 +69,33 @@
     margin: 0;
     padding: 0;
 }
+.not-selected {
+    background-color: white !important;
+}
+
+#loadSpinner {
+    position: absolute;
+    width: 100vw;
+    height: 100vh;
+    z-index: 9999;
+    background-color: white;
+    text-align: center;
+    display: none;
+}
+#loadSpinner img {
+    animation: rotation 5s infinite linear;
+    top: 40vh;
+    position: absolute;
+    left: 25vw;
+    width: 35vw;
+    height: auto;
+}
+
+@keyframes rotation {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(359deg);
+    }
+  }

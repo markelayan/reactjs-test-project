@@ -62,6 +62,10 @@ class Dashboard extends Component {
       next7Days: "",
       daysDifference: "",
       maxProduction: "",
+      currentMaxDist: "",
+      currentLineCost: "",
+      cartProducts: [],
+      enableAddBtn: false,
     };
   }
 
@@ -95,6 +99,7 @@ class Dashboard extends Component {
             locations: locations,
           });
         },
+               
         // Note: it's important to handle errors here
         // instead of a catch() block so that we don't swallow
         // exceptions from actual bugs in components.
@@ -103,7 +108,9 @@ class Dashboard extends Component {
             isLoaded: true,
             error,
           });
-        }
+        },
+        document.getElementById('loadSpinner').classList.remove('visible')
+
       );
 
     const fullDate = new Date();
@@ -121,24 +128,13 @@ class Dashboard extends Component {
       tomorrowDate: limit1Day,
       next7Days: limit7Days,
     });
+   
   }
 
   render() {
-    const fields = ["Place", "unites", "cost ", "status"];
-    const getBadge = (status) => {
-      switch (status) {
-        case "Active":
-          return "success";
-        case "Inactive":
-          return "secondary";
-        case "Pending":
-          return "warning";
-        case "Banned":
-          return "danger";
-        default:
-          return "primary";
-      }
-    };
+
+  
+    const fields = ["Product", "Place", "units", "cost "];
 
     let products = this.state.products;
     let productNames = products.map((product) => product.name);
@@ -147,7 +143,15 @@ class Dashboard extends Component {
     let datePicker = document.getElementById("date-input");
 
     const setSelectedDate = () => {
+      let tomorrowDate = this.state.tomorrowDate;
       let selectedDate = datePicker.value;
+      let lastAvailablDate = this.state.next7Days;
+      if (selectedDate < tomorrowDate || selectedDate > lastAvailablDate) {
+        datePicker.value = tomorrowDate;
+        alert(
+          `you can select dates between ${tomorrowDate} and ${lastAvailablDate} only`
+        );
+      }
       this.setState(
         {
           currentAddedDate: selectedDate,
@@ -169,6 +173,9 @@ class Dashboard extends Component {
       );
     };
     const calculateMaxOrder = () => {
+      const locationEnabled = document.getElementById("location-name");
+      locationEnabled.onclick = openProductModal;
+      locationEnabled.firstChild.classList.add("not-selected");
       let difDays = this.state.daysDifference;
       let maxProductionArray = this.state.currentAddedProduct.max_production;
       let maxProduction = "";
@@ -182,30 +189,36 @@ class Dashboard extends Component {
         maxProduction: maxProduction,
       });
     };
-    const addProduct = () => {
+    const openProductModal = () => {
       this.setState({ modalOpen: !this.state.modalOpen });
     };
 
     const selectedLocationHandler = () => {
       let locationNameText = document.querySelector(".location-name span");
       let selectedLocation = this.state.currentAddedLocation;
+      console.log(this.state.currentMaxDist);
       console.log(selectedLocation);
       if (selectedLocation) {
         locationNameText.innerText = selectedLocation.name;
         locationNameText.classList.add("selected");
+        locationNameText.classList.remove("not-selected");
+        document.getElementById("unitCount").disabled = false;
       } else {
         locationNameText.innerText = "Please select a Place";
         locationNameText.classList.remove("selected");
+        locationNameText.classList.add("not-selected");
       }
     };
     const locationClicked = (id) => {
       console.log(id);
       let locationID = locations.findIndex((el) => el.id === id);
-
+      let selectedLocationDetails = locations[locationID];
+      let locationMaxDist = selectedLocationDetails.max_dist;
       this.setState(
         {
           currentAddedLocation: locations[locationID],
           modalOpen: !this.state.modalOpen,
+          currentMaxDist: locationMaxDist,
         },
         selectedLocationHandler
       );
@@ -228,18 +241,102 @@ class Dashboard extends Component {
     };
 
     const calcCost = () => {
+      let maxDistValue = this.state.currentMaxDist;
+      let unitCount = document.getElementById("unitCount");
+
+      let unitCost = document.getElementById("unitCost");
+
+      let unitCountValue = unitCount.value;
       let selectedProduct = this.state.currentAddedProduct;
       let selectedLocation = this.state.currentAddedLocation;
-      let unitCount = document.getElementById("unitCount").value;
-      let productUnitCost = selectedProduct.price_per_unit * unitCount;
+      let selectedDate = datePicker.value;
+      let productUnitCost = selectedProduct.price_per_unit * unitCountValue;
       let shippingFee = selectedLocation.fee;
       let lineCost = productUnitCost + shippingFee;
-      let selectedDate = datePicker.value;
+      let addBtn = document.getElementById("addBtn");
+      if (
+        maxDistValue &&
+        unitCountValue <= maxDistValue &&
+        unitCountValue >= 0
+      ) {
+        unitCost.value = lineCost;
 
-      document.getElementById("unitCost").value = lineCost;
+        this.setState(
+          { currentLineCost: lineCost, currentUnitCount: unitCountValue },
+          preFinalChecks
+        );
+      } else {
+        unitCountValue = maxDistValue;
+        unitCount.value = unitCountValue;
+        selectedProduct = this.state.currentAddedProduct;
+        selectedLocation = this.state.currentAddedLocation;
+        selectedDate = datePicker.value;
+        productUnitCost = selectedProduct.price_per_unit * unitCountValue;
+        shippingFee = selectedLocation.fee;
+        lineCost = productUnitCost + shippingFee;
+        unitCost.value = lineCost;
+        this.setState(
+          { currentLineCost: lineCost, currentUnitCount: unitCountValue },
+          alert(
+            `You can order up to ${maxDistValue} for distribution on this day`
+          ),
+          preFinalChecks
+        );
+      }
+    };
+
+    const preFinalChecks = () => {
+      let product = this.state.currentAddedProduct;
+      let date = this.state.currentAddedDate;
+      let place = this.state.currentAddedLocation;
+      let lineCost = this.state.currentLineCost;
+      let addBtn = document.getElementById("addBtn");
+      if (product && date && place && lineCost) {
+        addBtn.disabled = false;
+        addBtn.onclick = addItemstoCart;
+        addBtn.classList.add("btn-success");
+        addBtn.classList.remove("btn-secondary");
+      } else {
+        addBtn.disabled = true;
+        addBtn.onclick = null;
+        addBtn.classList.add("btn-secondary");
+        addBtn.classList.remove("btn-success");
+      }
+    };
+    const addItemstoCart = () => {
+      let product = this.state.currentAddedProduct;
+      let date = this.state.currentAddedDate;
+      let place = this.state.currentAddedLocation;
+      let lineCost = this.state.currentLineCost;
+      let unitCount = this.state.currentUnitCount;
+      let productInfo = [date, product.name, place.name,unitCount, lineCost];
+      const productsTable = document.querySelector("table tbody");
+      let newProductAddedTR = document.createElement("tr");
+      newProductAddedTR.id = product.id;
+      productsTable.append(newProductAddedTR);
+      console.log(productInfo);
+      let allInfo = productInfo.map((info) => {
+        let td = document.createElement("td");
+        td.innerText = info;
+        newProductAddedTR.append(td);
+      });
+
+      //   const movieList = document.getElementById("movie-list");
+      //   const newMovieEl = document.createElement("li");
+      //   newMovieEl.className = "movie-element";
+      //   newMovieEl.innerHTML = `
+      // <div class='movie-element__image'>
+      // <img src='${img}' >
+      // </div>
+      // <div class='movie-element__info'>
+      // <h2>${name}</h2>
+      // <p>${rating}/5</p>
+      // </div>`;
+      //   movieList.append(newMovieEl);
     };
     return (
       <CRow>
+       
         <CCol xs="12" md="12">
           <CCard>
             <CCardHeader>
@@ -281,7 +378,7 @@ class Dashboard extends Component {
                     name="date-input"
                     placeholder="date"
                     className={this.state.datePickerClass}
-                    onChange={setSelectedDate}
+                    onBlur={setSelectedDate}
                     title="you can select up to 7 days in advance."
                     min={this.state.tomorrowDate}
                     max={this.state.next7Days}
@@ -301,9 +398,9 @@ class Dashboard extends Component {
                     Place
                   </CLabel>
                   <CLabel
+                    id="location-name"
                     className="location-name"
                     htmlFor="text-input"
-                    onClick={addProduct}
                   >
                     <span> Please select a Place </span>
                   </CLabel>
@@ -321,7 +418,8 @@ class Dashboard extends Component {
                     placeholder="Units"
                     type="number"
                     onChange={calcCost}
-                    max="0"
+                    max={this.state.currentMaxDist}
+                    min="0"
                     disabled
                   />
                 </CCol>
@@ -347,10 +445,11 @@ class Dashboard extends Component {
                 <CCol xs="12" md="4">
                   <button
                     type="button"
-                    className="btn btn-square btn-success"
-                    onClick={addProduct}
+                    id="addBtn"
+                    className="btn btn-square btn-secondary "
+                    disabled
                   >
-                    Add to List
+                    Add to Cart
                   </button>
                 </CCol>
               </CFormGroup>
@@ -358,27 +457,28 @@ class Dashboard extends Component {
                 {/* tables */}
 
                 <CCardBody>
-                  <CDataTable
-                    items={usersData}
-                    fields={fields}
-                    itemsPerPage={5}
-                    scopedSlots={{
-                      status: (item) => (
-                        <td>
-                          <CBadge color={getBadge(item.status)}>
-                            {item.status}
-                          </CBadge>
-                        </td>
-                      ),
-                    }}
-                  />
+                  <div className="table-responsive">
+                    <table id="productsTable" className="table">
+                      <thead>
+                        <tr>
+                          <th scope="col">Date</th>
+                          <th scope="col">Product Name</th>
+                          <th scope="col">Location</th>
+                          <th scope="col">Unit Count</th>
+                          <th scope="col">Cost</th>
+                        </tr>
+                      </thead>
+
+                      <tbody></tbody>
+                    </table>
+                  </div>
                 </CCardBody>
               </CRow>
 
               <CModal
                 id="ProductModal"
                 show={this.state.modalOpen}
-                onClose={addProduct}
+                onClose={openProductModal}
                 size="xl"
               >
                 <CModalHeader closeButton>
