@@ -6,26 +6,14 @@ import {
   CCardFooter,
   CCardHeader,
   CCol,
-  CCollapse,
-  CDropdownItem,
-  CDropdownMenu,
-  CDropdownToggle,
-  CFade,
   CForm,
   CFormGroup,
   CFormText,
-  CValidFeedback,
-  CInvalidFeedback,
   CTextarea,
   CInput,
   CInputFile,
   CInputCheckbox,
   CInputRadio,
-  CInputGroup,
-  CInputGroupAppend,
-  CInputGroupPrepend,
-  CDropdown,
-  CInputGroupText,
   CLabel,
   CSelect,
   CRow,
@@ -50,7 +38,6 @@ const BasicForms = () => {
     }
   }
 
-    let products = [];
 
     return (
     <>

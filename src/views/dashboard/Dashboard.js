@@ -1,4 +1,4 @@
-import React, { Component, useState } from "react";
+import React, { Component } from "react";
 import {
   CButton,
   CCard,
@@ -6,42 +6,20 @@ import {
   CCardFooter,
   CCardHeader,
   CCol,
-  CCollapse,
-  CDropdownItem,
-  CDropdownMenu,
-  CDropdownToggle,
-  CFade,
-  CForm,
   CFormGroup,
-  CFormText,
-  CValidFeedback,
-  CInvalidFeedback,
-  CTextarea,
   CInput,
-  CInputFile,
-  CInputCheckbox,
-  CInputRadio,
-  CInputGroup,
-  CInputGroupAppend,
-  CInputGroupPrepend,
-  CDropdown,
-  CInputGroupText,
   CLabel,
   CSelect,
   CRow,
-  CBadge,
-  CDataTable,
   CModal,
   CModalBody,
-  CModalFooter,
   CModalHeader,
   CModalTitle,
 } from "@coreui/react";
 import CIcon from "@coreui/icons-react";
-import usersData from "../users/UsersData";
-import { render } from "enzyme";
 import Map from "./Maps";
-import { element } from "prop-types";
+
+const PRODUCT_API ="https://5efabb3a80d8170016f758ee.mockapi.io/products";
 
 class Dashboard extends Component {
   constructor(props) {
@@ -60,10 +38,10 @@ class Dashboard extends Component {
       currentAddedLocation: "",
       currentAddedProduct: [],
       currentAddedDate: "",
-      daysDifference: "",
-      maxProduction: "",
-      currentMaxDist: "",
-      currentLineCost: "",
+      daysDifference: 0,
+      maxProduction: 0,
+      currentMaxDist: 0,
+      currentLineCost: 0,
       cartProduct: [],
       cartLocations: [],
       totalUnits: 0,
@@ -71,8 +49,25 @@ class Dashboard extends Component {
     };
   }
 
+  setupDate() {
+    const fullDate = new Date();
+    const todayDate = fullDate.toISOString().slice(0, 10);
+    const tomorrow = new Date(fullDate);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const limit1Day = tomorrow.toISOString().slice(0, 10);
+
+    const next7Days = new Date(fullDate);
+    next7Days.setDate(next7Days.getDate() + 7);
+    const limit7Days = next7Days.toISOString().slice(0, 10);
+    this.setState({
+      todayDate: todayDate,
+      tomorrowDate: limit1Day,
+      next7Days: limit7Days,
+    });
+  }
+
   componentDidMount() {
-    fetch("https://5efabb3a80d8170016f758ee.mockapi.io/products")
+    fetch(PRODUCT_API )
       .then((res) => res.json())
       .then(
         (products) => {
@@ -96,6 +91,10 @@ class Dashboard extends Component {
       .then((loc) => loc.json())
       .then(
         (locations) => {
+          locations = locations.map((location) => {
+                  location.status = "enabled";
+                  return location
+                });
           this.setState({
             isLoaded: true,
             locations: locations,
@@ -111,33 +110,46 @@ class Dashboard extends Component {
             error,
           });
         },
-        document.getElementById("loadSpinner").classList.remove("visible")
+        
       );
+   
+    this.setupDate()
+   
 
-    const fullDate = new Date();
-    const todayDate = fullDate.toISOString().slice(0, 10);
-    const tomorrow = new Date(fullDate);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    const limit1Day = tomorrow.toISOString().slice(0, 10);
-
-    const next7Days = new Date(fullDate);
-    next7Days.setDate(next7Days.getDate() + 7);
-    const limit7Days = next7Days.toISOString().slice(0, 10);
-
-    this.setState({
-      todayDate: todayDate,
-      tomorrowDate: limit1Day,
-      next7Days: limit7Days,
-    });
   }
+//    setupLocations  ()  {
+//     let locations = this.state.locations;
+//     locations = locations.map((location) => {
+//       location.status = "enabled";
+//       return location
+//     });
+//     this.setState({
+//       locations : locations
+//     })
+// }
 
   render() {
-    const fields = ["Product", "Place", "units", "cost "];
 
+    // global variables introduction 
+
+    let fields = ["Date", "Product", "Place", "units", "cost ", "Remove"];
+    const { isLoaded } = this.state;
+
+
+
+
+    // global variables introduction ended
+
+    
+    
+
+    fields = fields.map((field,i)=> (<th key= {i} scope="col">{field}</th>)) 
+    let locations = this.state.locations;
     let products = this.state.products;
     let productNames = products.map((product) => product.name);
     productNames.unshift("Please select");
-    let locations = this.state.locations;
+    
+
     let datePicker = document.getElementById("date-input");
 
     const setSelectedDate = () => {
@@ -216,10 +228,10 @@ class Dashboard extends Component {
     };
 
     const locationClicked = (id) => {
-      console.log(id);
       let locationID = locations.findIndex((el) => el.id === id);
       let selectedLocationDetails = locations[locationID];
       let locationMaxDist = selectedLocationDetails.max_dist;
+      
       this.setState(
         {
           currentAddedLocation: locations[locationID],
@@ -367,7 +379,8 @@ class Dashboard extends Component {
       let cartLocations = this.state.cartLocations;
       let totalUnits = this.state.totalUnits;
       let totalCost = this.state.totalCost;
-      console.log(cartLocations);
+      
+      removeLocationFromMap(place.id)
 
       let productInfo = [
         date,
@@ -395,7 +408,6 @@ class Dashboard extends Component {
       });
 
       cartLocations.push({ id: place.id, quantity: currentUnitCount });
-      console.log();
       if (cartProductsInfo.length == 0) {
         this.setState(
           {
@@ -418,8 +430,23 @@ class Dashboard extends Component {
       }
     };
 
+    const removeLocationFromMap =(id) => {
+      
+      locations = locations.map((location) => {
+        
+        if(location.id == id){
+        location.status = "disabled";
+        return location
+      } else {
+        return location
+      }
+      });
+      this.setState({
+        locations: locations
+      })
+    }
+
     const prepareAnotherProduct = () => {
-      console.log(this.state.cartProduct);
       toggleProductSelect(false);
 
       toggleDatePicker(false);
@@ -465,6 +492,11 @@ class Dashboard extends Component {
       let productToRemove = document.getElementById(id);
       productToRemove.remove();
     };
+
+    
+    if (isLoaded) {
+      document.getElementById("loadSpinner").classList.remove("visible")
+    }
     return (
       <CRow>
         <CCol xs="12" md="12">
@@ -592,12 +624,8 @@ class Dashboard extends Component {
                     <table id="productsTable" className="table">
                       <thead>
                         <tr>
-                          <th scope="col">Date</th>
-                          <th scope="col">Product Name</th>
-                          <th scope="col">Location</th>
-                          <th scope="col">Unit Count</th>
-                          <th scope="col">Cost</th>
-                          <th scope="col">Remove</th>
+                          
+                        {fields}
                         </tr>
                       </thead>
 
@@ -610,45 +638,29 @@ class Dashboard extends Component {
               {/* Totals */}
               <CFormGroup row>
                 <CCol md="2">
-                  <CLabel  htmlFor="date-input">
-                    <b>Total Units:</b> 
+                  <CLabel htmlFor="date-input">
+                    <b>Total Units:</b>
                   </CLabel>
                 </CCol>
                 {/* clickable location added */}
                 <CCol xs="12" md="2">
-                  <CLabel >
-                    {this.state.totalUnits}
-                  </CLabel>
-                  <CLabel
-                    id="totalUnits"
-                    htmlFor="text-input"
-                  >
-                  </CLabel>
+                  <CLabel>{this.state.totalUnits}</CLabel>
+                  <CLabel id="totalUnits" htmlFor="text-input"></CLabel>
                 </CCol>
                 {/* /clickable location added */}
-                
-                
               </CFormGroup>
               <CFormGroup row>
                 <CCol md="2">
-                  <CLabel  htmlFor="date-input">
-                    <b>Total Cost:</b> 
+                  <CLabel htmlFor="date-input">
+                    <b>Total Cost:</b>
                   </CLabel>
                 </CCol>
                 {/* clickable location added */}
                 <CCol xs="12" md="2">
-                  <CLabel >
-                    {this.state.totalCost}
-                  </CLabel>
-                  <CLabel
-                    id="totalUnits"
-                    htmlFor="text-input"
-                  >
-                  </CLabel>
+                  <CLabel>{this.state.totalCost}</CLabel>
+                  <CLabel id="totalUnits" htmlFor="text-input"></CLabel>
                 </CCol>
                 {/* /clickable location added */}
-                
-                
               </CFormGroup>
               {/* Totals */}
               <CModal
@@ -662,10 +674,10 @@ class Dashboard extends Component {
                 </CModalHeader>
                 <CModalBody>
                   {this.state.modalOpen ? (
-                    <Map locations={locations} clicked={locationClicked} />
+                    <Map locations={this.state.locations} clicked={locationClicked} />
                   ) : (
                     ""
-                  )}
+                  ) }
                 </CModalBody>
               </CModal>
             </CCardBody>

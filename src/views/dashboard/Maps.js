@@ -29,15 +29,17 @@ function Map(props) {
   // The places I want to create markers for.
   // This could be a data-driven prop.
   const locations = props.locations;
-  console.log(locations);
   let myPlaces = locations.map((location) => {
-    return {
-      id: location.id,
-      pos: { lat: location.lat, lng: location.long },
-      name: location.name,
-      fee: location.fee,
-      max_dist: location.max_dist,
-    };
+   
+      return {
+        id: location.id,
+        pos: { lat: location.lat, lng: location.long },
+        name: location.name,
+        fee: location.fee,
+        max_dist: location.max_dist,
+        status: location.status
+      };
+    
   });
 
   // Iterate myPlaces to size, center, and zoom map to contain all markers
@@ -77,7 +79,7 @@ function Map(props) {
 
     // If you want to zoom in a little on marker click
     if (zoom < 13) {
-      setZoom(13);
+      setZoom(14);
     }
 
     // if you want to center the selected Marker
@@ -85,7 +87,6 @@ function Map(props) {
   };
 
   const updateIndex = (id) => {
-    console.log(props);
     props.clicked(id);
 
     // overlayUpdate(position);
@@ -107,14 +108,18 @@ function Map(props) {
             width: "100%",
           }}
         >
-          {myPlaces.map((place) => (
-            <Marker
+          {myPlaces.map((place) => {
+            
+            if(place.status == 'enabled'){
+            return (<Marker
               key={place.id}
               position={place.pos}
               onLoad={(marker) => markerLoadHandler(marker, place)}
               onClick={(event) => markerClickHandler(event, place)}
-            />
-          ))}
+            /> )
+        }
+          }
+          )}
 
           {infoOpen && selectedPlace && (
             <InfoWindow
