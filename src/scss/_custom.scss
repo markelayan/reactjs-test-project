@@ -1,4 +1,35 @@
-// Here you can add other styles
+
+.lds-dual-ring {
+  display: inline-block;
+  width: 80px;
+  height: 80px;
+  
+  margin: 0;
+  position: absolute;
+  top: 50%;
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+
+}
+.lds-dual-ring:after {
+  content: " ";
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin: 8px;
+  border-radius: 50%;
+  border: 6px solid #fff;
+  border-color: #fff transparent #fff transparent;
+  animation: lds-dual-ring 1.2s linear infinite;
+}
+@keyframes lds-dual-ring {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
 
 .invalidFeedback {
   display: none;
@@ -74,13 +105,13 @@
 }
 
 #loadSpinner {
-    position: absolute;
-    width: 100vw;
-    height: 100vh;
-    z-index: 9999;
-    background-color: white;
-    text-align: center;
-    display: none;
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  background-color: #00000047;
+  text-align: center;
+  display: none;
 }
 #loadSpinner img {
     animation: rotation 5s infinite linear;

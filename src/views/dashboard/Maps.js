@@ -30,16 +30,14 @@ function Map(props) {
   // This could be a data-driven prop.
   const locations = props.locations;
   let myPlaces = locations.map((location) => {
-   
-      return {
-        id: location.id,
-        pos: { lat: location.lat, lng: location.long },
-        name: location.name,
-        fee: location.fee,
-        max_dist: location.max_dist,
-        status: location.status
-      };
-    
+    return {
+      id: location.id,
+      pos: { lat: location.lat, lng: location.long },
+      name: location.name,
+      fee: location.fee,
+      max_dist: location.max_dist,
+      status: location.status,
+    };
   });
 
   // Iterate myPlaces to size, center, and zoom map to contain all markers
@@ -109,17 +107,17 @@ function Map(props) {
           }}
         >
           {myPlaces.map((place) => {
-            
-            if(place.status == 'enabled'){
-            return (<Marker
-              key={place.id}
-              position={place.pos}
-              onLoad={(marker) => markerLoadHandler(marker, place)}
-              onClick={(event) => markerClickHandler(event, place)}
-            /> )
-        }
-          }
-          )}
+            if (place.status == "enabled") {
+              return (
+                <Marker
+                  key={place.id}
+                  position={place.pos}
+                  onLoad={(marker) => markerLoadHandler(marker, place)}
+                  onClick={(event) => markerClickHandler(event, place)}
+                />
+              );
+            }
+          })}
 
           {infoOpen && selectedPlace && (
             <InfoWindow

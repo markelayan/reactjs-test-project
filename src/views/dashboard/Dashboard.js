@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, Fragment } from "react";
 import {
   CButton,
   CCard,
@@ -16,11 +16,16 @@ import {
   CModalHeader,
   CModalTitle,
 } from "@coreui/react";
+import axios from "axios";
+
 import CIcon from "@coreui/icons-react";
 import Map from "./Maps";
+import DataTable from "./DataTable";
 // import { parseInt } from "core-js/fn/number";
 
 const PRODUCT_API = "https://5efabb3a80d8170016f758ee.mockapi.io/products";
+const LOCATIONS_API = "https://5efabb3a80d8170016f758ee.mockapi.io/locations";
+const CART_API = "https://5efabb3a80d8170016f758ee.mockapi.io/cart";
 const ENABLED = "enabled";
 const DISABLED = " disabled";
 
@@ -46,12 +51,12 @@ class Dashboard extends Component {
       currentMaxDist: 0,
       currentLineCost: 0,
       CartElements: [],
-      cartProduct: [],
-      cartLocations: [],
       currentUnitCount: 0,
       totalUnits: 0,
       totalCost: 0,
       productElements: [],
+      cartProduct: [],
+      cartLocations: [],
     };
   }
 
@@ -73,68 +78,63 @@ class Dashboard extends Component {
   }
 
   componentDidMount() {
-    fetch(PRODUCT_API)
-      .then((res) => res.json())
-      .then(
-        (products) => {
-          this.setState({
-            isLoaded: true,
-            products: products,
-          });
-        },
-        // Note: it's important to handle errors here
-        // instead of a catch() block so that we don't swallow
-        // exceptions from actual bugs in components.
-        (error) => {
-          this.setState({
-            isLoaded: true,
-            error,
-          });
+    axios
+      .get(PRODUCT_API)
+      .then((res) => {
+        const products = res.data;
+        this.setState({
+          products: products,
+        });
+      })
+      .catch((error) => {
+        if (error.response) {
+          alert(
+            `Sorry, There was an error in the products server and application won\'t function \n${error.response.data} \n${error.response.status}`
+          );
+          
+        } else if (error.request) {
+          alert(
+            "Sorry, There was an error in the products server and application won't function"
+          );
+        } else {
         }
-      );
+      });
 
-    fetch("https://5efabb3a80d8170016f758ee.mockapi.io/locations")
-      .then((loc) => loc.json())
-      .then(
-        (locations) => {
-          locations = locations.map((location) => {
-            location.status = "enabled";
-            return location;
-          });
-          this.setState({
-            isLoaded: true,
-            locations: locations,
-          });
-        },
+    axios
+      .get(LOCATIONS_API)
+      .then((res) => {
+        let locations = res.data;
 
-        // Note: it's important to handle errors here
-        // instead of a catch() block so that we don't swallow
-        // exceptions from actual bugs in components.
-        (error) => {
-          this.setState({
-            isLoaded: true,
-            error,
-          });
+        locations = locations.map((location) => {
+          location.status = "enabled";
+          return location;
+        });
+        this.setState({
+          isLoaded: true,
+          locations: locations,
+        });
+      })
+      .catch((error) => {
+        if (error.response) {
+          alert(
+            `Sorry, There was an error in the locations server and application won\'t function \n${error.response.data} \n${error.response.status}`
+          );
+        
+        } else if (error.request) {
+          alert(
+            "Sorry, There was an error in the locations server and application won't function"
+          );
+        } else {
         }
-      );
+      });
 
     this.setupDate();
   }
-  //    setupLocations  ()  {
-  //     let locations = this.state.locations;
-  //     locations = locations.map((location) => {
-  //       location.status = "enabled";
-  //       return location
-  //     });
-  //     this.setState({
-  //       locations : locations
-  //     })
-  // }
 
   render() {
     // global variables introduction
 
-    const { isLoaded } = this.state;
+    const isLoaded = this.state.isLoaded;
     let locations = this.state.locations;
     let products = this.state.products;
     let productNames = products.map((product) => product.name);
@@ -143,21 +143,15 @@ class Dashboard extends Component {
     let datePicker = document.getElementById("date-input");
     const locationNameHolder = document.getElementById("location-name");
     const unitCountInput = document.getElementById("unitCount");
+    const unictCountParent = document.getElementById("00");
+
     let productSelect = document.querySelector("#select-product");
-    let unitCost = document.getElementById("unitCost");
     let locationNameText = document.querySelector(".location-name span");
 
-    let productsTable = document.querySelector("#productsTable tbody");
     let fields = ["Date", "Product", "Place", "units", "cost ", "Remove"];
     let productElements = this.state.productElements;
 
     // global variables introduction ended
-
-    fields = fields.map((field, i) => (
-      <th key={i} scope="col">
-        {field}
-      </th>
-    ));
 
     const setSelectedDate = () => {
       let tomorrowDate = this.state.tomorrowDate;
@@ -168,13 +162,20 @@ class Dashboard extends Component {
         alert(
           `you can select dates between ${tomorrowDate} and ${lastAvailablDate} only`
         );
+        this.setState(
+          {
+            currentAddedDate: datePicker.value,
+          },
+          calculateDates
+        );
+      } else {
+        this.setState(
+          {
+            currentAddedDate: selectedDate,
+          },
+          calculateDates
+        );
       }
-      this.setState(
-        {
-          currentAddedDate: selectedDate,
-        },
-        calculateDates
-      );
     };
 
     const calculateDates = () => {
@@ -197,24 +198,25 @@ class Dashboard extends Component {
       let totalUnitsOrdered = calculateNewTotalUnits();
       let maxProd = 0;
       let maxDist = 0;
-      debugger
       // let currentTotalUnits = calculateNewTotalUnits()
-      for (let i = 0; i <Object.keys(maxProductionArray).length; i++) {
+      for (let i = 0; i < Object.keys(maxProductionArray).length; i++) {
         if (difDays == i) {
           maxProd = maxProductionArray[i];
         } else if (difDays > i) {
           maxProd = maxProductionArray[i];
         }
       }
-      let availaToOrder = maxProd - totalUnitsOrdered
+      let availaToOrder = maxProd - totalUnitsOrdered;
 
       if (availaToOrder > locationMaxDist) {
         maxDist = locationMaxDist;
       } else {
-        maxDist = availaToOrder;
+        if (availaToOrder == 0) {
+          toggleUnitCountInput(DISABLED);
+        } else {
+          maxDist = availaToOrder;
+        }
       }
-
-      console.log("ere here");
 
       return maxDist;
     };
@@ -247,7 +249,7 @@ class Dashboard extends Component {
       let locationID = locations.findIndex((el) => el.id === id);
       let selectedLocationDetails = locations[locationID];
       let locationMaxDist = selectedLocationDetails.max_dist;
-      
+
       let maxOrder = calculateMaxOrder(locationMaxDist);
       this.setState(
         {
@@ -289,8 +291,6 @@ class Dashboard extends Component {
         unitCountValue <= maxDistValue &&
         unitCountValue >= 0
       ) {
-        unitCost.value = lineCost;
-
         this.setState(
           { currentLineCost: lineCost, currentUnitCount: unitCountValue },
           preFinalChecks
@@ -304,8 +304,7 @@ class Dashboard extends Component {
         productUnitCost = selectedProduct.price_per_unit * unitCountValue;
         shippingFee = selectedLocation.fee;
         lineCost = productUnitCost + shippingFee;
-        unitCost.value = lineCost;
-        toggleAddBtn(false);
+        toggleAddBtn(ENABLED);
         this.setState(
           { currentLineCost: lineCost, currentUnitCount: unitCountValue },
           alert(
@@ -322,14 +321,12 @@ class Dashboard extends Component {
       let place = this.state.currentAddedLocation;
       let lineCost = this.state.currentLineCost;
       let unitCountValue = this.state.currentUnitCount;
-      if (unitCountValue && unitCountValue == 0) {
-        unitCountValue = false;
-      }
+
       let status = false;
       if (product && date && place && lineCost && unitCountValue) {
-        status = true;
+        status = ENABLED;
       } else {
-        status = false;
+        status = DISABLED;
       }
       toggleAddBtn(status);
     };
@@ -374,12 +371,12 @@ class Dashboard extends Component {
     const toggleAddBtn = (status) => {
       let addBtn = document.getElementById("addBtn");
 
-      if (status == true) {
+      if (status == ENABLED) {
         addBtn.disabled = false;
         addBtn.onclick = addItemstoCart;
         addBtn.classList.add("btn-success");
         addBtn.classList.remove("btn-secondary");
-      } else {
+      } else if (status == DISABLED) {
         addBtn.disabled = true;
         addBtn.onclick = null;
         addBtn.classList.add("btn-secondary");
@@ -408,36 +405,7 @@ class Dashboard extends Component {
     };
 
     const addNewProductElement = (productInfo) => {
-      let productElements = this.state.productElements;
-      console.log(productElements);
-      // let date = productInfo.date
-      // let ProductName = productInfo.productName
-      // let placeName = productInfo.placeName
-      // let currentUnitCount = productInfo.currentUnitCount
-      // let lineCost = productInfo.lineCost
-      // let removeBtn = productInfo.remove
-      // let placeID = productInfo.placeID
-      // let newCartElement = [date,ProductName,placeName,currentUnitCount,lineCost,removeBtn,placeID]
       this.state.productElements.push(productInfo);
-      // if (productElements.length > 0) {
-      //   productElements.push(productElements, productInfo);
-      // } else {
-      //   productElements.push(productInfo);
-      // }
-      // this.setState({ productElements: productElements });
-      // let newProductAddedTR = document.createElement("tr");
-      //   newProductAddedTR.id = placeID;
-      //   productsTable.append(newProductAddedTR);
-
-      //   productInfo.map((info) => {
-      //     let td = document.createElement("td");
-      //     td.innerHTML = `<span>${info}</span>`;
-      //     if (info === "X") {
-      //       td.classList.add("removeBtn");
-      //       td.onclick = removeSelectedProduct.bind(null, placeID);
-      //     }
-      //     newProductAddedTR.append(td);
-      //   });
     };
 
     const updateTotals = () => {
@@ -536,7 +504,6 @@ class Dashboard extends Component {
     };
 
     const prepareAnotherProduct = () => {
-      console.log("preparing");
       toggleProductSelect(DISABLED);
 
       toggleDatePicker(DISABLED);
@@ -546,11 +513,9 @@ class Dashboard extends Component {
       toggleUnitCountInput(DISABLED);
       unitCountInput.value = "";
 
-      unitCost.value = "";
-      toggleAddBtn(false);
+      toggleAddBtn(DISABLED);
       this.setState({
         currentAddedLocation: "",
-
         currentLineCost: 0,
       });
     };
@@ -563,7 +528,6 @@ class Dashboard extends Component {
       }
     };
     const clearSelectedValues = () => {
-      debugger;
       toggleProductSelect(ENABLED);
       productSelect.selectedIndex = 0;
 
@@ -574,9 +538,7 @@ class Dashboard extends Component {
       toggleUnitCountInput(DISABLED);
       unitCountInput.value = "";
 
-      unitCost.value = "";
-
-      toggleAddBtn(false);
+      toggleAddBtn(DISABLED);
       productElements = [];
       toggleLocationFromMap("all");
       this.setState(
@@ -601,15 +563,44 @@ class Dashboard extends Component {
     };
 
     const removeSelectedProduct = (i, id) => {
-      // let productToRemove = document.getElementById(id);
-      // productToRemove.remove();
       this.state.productElements.splice(i, 1);
       updateTotals();
       toggleLocationFromMap(id, "enable");
+      let newMaxOrder = calculateMaxOrder();
+      this.setState({
+        currentMaxDist: newMaxOrder,
+      });
+    };
+
+    const postToCart = () => {
+      let cartProduct = this.state.cartProduct;
+      let cartLocations = this.state.cartLocations;
+      let locationsObj = { locations: cartLocations };
+      let postObj = Object.assign(cartProduct[0], locationsObj);
+      toggleLoadSpinner(ENABLED);
+      axios
+        .post(CART_API, { postObj })
+        .then((res) => {
+          clearSelectedValues();
+          toggleLoadSpinner(DISABLED);
+          this.props.history.push('/ThankYou');
+        })
+        .catch((error) => {
+          toggleLoadSpinner(DISABLED);
+          alert("There was an error!", error.message);
+        });
+    };
+    const toggleLoadSpinner = (status) => {
+      let loadSpinner = document.getElementById("loadSpinner");
+      if (status == ENABLED) {
+        loadSpinner.classList = "visible";
+      } else if (status == DISABLED) {
+        loadSpinner.classList = "";
+      }
     };
 
     if (isLoaded) {
-      document.getElementById("loadSpinner").classList.remove("visible");
+      toggleLoadSpinner(DISABLED);
     }
     return (
       <CRow>
@@ -680,26 +671,28 @@ class Dashboard extends Component {
                     <span> Please select a Place </span>
                   </CLabel>
                 </CCol>
-                {/* /clickable location added */}
+                {/* /clickable location  */}
                 {/* unit Count */}
 
                 <CCol xs="12" md="2">
                   <CLabel className="place-list-h" htmlFor="unit-count">
                     Unit Count
                   </CLabel>
-                  <CInput
-                    id="unitCount"
-                    name="units"
-                    placeholder="Units"
-                    type="number"
-                    onChange={calcCost}
-                    max={this.state.currentMaxDist}
-                    min="1"
-                    disabled
-                  />
+                  <div id="00">
+                    <CInput
+                      id="unitCount"
+                      name="units"
+                      placeholder="Units"
+                      type="number"
+                      onChange={calcCost}
+                      max={this.state.currentMaxDist}
+                      min="1"
+                      disabled
+                    />
+                  </div>
                 </CCol>
                 {/* /unit Count */}
-                {/* /units cost */}
+                {/* units cost */}
                 <CCol xs="12" md="2">
                   <CLabel className="place-list-h" htmlFor="date-input">
                     Cost
@@ -709,11 +702,13 @@ class Dashboard extends Component {
                     name="cost"
                     placeholder="Units"
                     type="number"
+                    value={this.state.currentLineCost}
                     disabled
                   />
                 </CCol>
-                {/* /units Cost */}
               </CFormGroup>
+              {/* /units Cost */}
+              {/* Add Button */}
               <CFormGroup row>
                 <CCol md="3"></CCol>
 
@@ -732,45 +727,13 @@ class Dashboard extends Component {
               <CRow>
                 {/* tables */}
 
-                <CCardBody>
-                  <div className="table-responsive">
-                    <table id="productsTable" className="table">
-                      <thead>
-                        <tr>{fields}</tr>
-                      </thead>
-                      <tbody>
-                        {console.log(this.state.productElements)}
-                        {this.state.productElements ? (
-                          productElements.map((el, i) => {
-                            return (
-                              <tr id={el.placeID} key={i}>
-                                <td>{el.date}</td>
-                                <td>{el.productName}</td>
-                                <td>{el.placeName}</td>
-                                <td>{el.currentUnitCount}</td>
-                                <td>{el.lineCost}</td>
-                                <td
-                                  className="removeBtn"
-                                  onClick={removeSelectedProduct.bind(
-                                    null,
-                                    i,
-                                    el.placeID
-                                  )}
-                                >
-                                  <span>{el.remove}</span>
-                                </td>
-                              </tr>
-                            );
-                          })
-                        ) : (
-                          <tr>
-                            <td>No Data</td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
-                </CCardBody>
+             
+                  <DataTable
+                    fields={fields}
+                    items={productElements}
+                    click={removeSelectedProduct}
+                  ></DataTable>
+              
               </CRow>
               {/* / table */}
               {/* Totals */}
@@ -806,7 +769,7 @@ class Dashboard extends Component {
                 size="xl"
               >
                 <CModalHeader closeButton>
-                  <CModalTitle>Hover on location to see details</CModalTitle>
+                  <CModalTitle>Available locations</CModalTitle>
                 </CModalHeader>
                 <CModalBody>
                   {this.state.modalOpen ? (
@@ -821,7 +784,12 @@ class Dashboard extends Component {
               </CModal>
             </CCardBody>
             <CCardFooter>
-              <CButton type="submit" size="sm" color="primary">
+              <CButton
+                type="submit"
+                size="sm"
+                color="primary"
+                onClick={postToCart}
+              >
                 <CIcon name="cil-scrubber" /> Submit
               </CButton>
               <CButton
