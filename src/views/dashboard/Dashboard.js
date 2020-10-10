@@ -181,9 +181,12 @@ class Dashboard extends Component {
           calculateDates
         );
       } else {
-        this.setState({
+        this.setState(
+          {
             currentAddedDate: selectedDate,
-          }, calculateDates );
+          },
+          calculateDates
+        );
       }
     };
 
@@ -194,7 +197,8 @@ class Dashboard extends Component {
       let difference = selected - today;
       const diffDays = Math.ceil(difference / (1000 * 60 * 60 * 24));
       this.setState(
-        {daysDifference: diffDays }, togglePlaceNameHolder(ENABLED)
+        { daysDifference: diffDays },
+        togglePlaceNameHolder(ENABLED)
       );
     };
 
@@ -276,9 +280,10 @@ class Dashboard extends Component {
         unitCountValue >= 0
       ) {
         toggleAddBtn(ENABLED);
-        this.setState(
-          { currentLineCost: lineCost, currentUnitCount: unitCountValue },
-        );
+        this.setState({
+          currentLineCost: lineCost,
+          currentUnitCount: unitCountValue,
+        });
       } else {
         unitCountValue = maxDistValue;
         unitCountInput.value = unitCountValue;
@@ -293,12 +298,11 @@ class Dashboard extends Component {
           { currentLineCost: lineCost, currentUnitCount: unitCountValue },
           alert(
             `You can order up to ${maxDistValue} for distribution on this day`
-          ),
+          )
         );
       }
     };
 
-    
     // toggelers
 
     const toggleProductSelect = (status) => {
@@ -544,7 +548,8 @@ class Dashboard extends Component {
       let locationsObj = { locations: cartLocations };
       let postObj = Object.assign(cartProduct[0], locationsObj);
       toggleLoadSpinner(ENABLED);
-      axios.post(CART_API, { postObj })
+      axios
+        .post(CART_API, { postObj })
         .then((res) => {
           clearSelectedValues();
           toggleLoadSpinner(DISABLED);
