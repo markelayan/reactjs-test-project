@@ -17,11 +17,9 @@ import {
   CModalTitle,
 } from "@coreui/react";
 import axios from "axios";
-
 import CIcon from "@coreui/icons-react";
 import Map from "./Maps";
 import DataTable from "./DataTable";
-// import { parseInt } from "core-js/fn/number";
 
 const PRODUCT_API = "https://5efabb3a80d8170016f758ee.mockapi.io/products";
 const LOCATIONS_API = "https://5efabb3a80d8170016f758ee.mockapi.io/locations";
@@ -77,7 +75,7 @@ class Dashboard extends Component {
     });
   }
 
-  componentDidMount() {
+  getProducts() {
     axios
       .get(PRODUCT_API)
       .then((res) => {
@@ -91,7 +89,6 @@ class Dashboard extends Component {
           alert(
             `Sorry, There was an error in the products server and application won\'t function \n${error.response.data} \n${error.response.status}`
           );
-          
         } else if (error.request) {
           alert(
             "Sorry, There was an error in the products server and application won't function"
@@ -99,14 +96,16 @@ class Dashboard extends Component {
         } else {
         }
       });
+  }
 
+  getLocations() {
     axios
       .get(LOCATIONS_API)
       .then((res) => {
         let locations = res.data;
 
         locations = locations.map((location) => {
-          location.status = "enabled";
+          location.status = true;
           return location;
         });
         this.setState({
@@ -119,7 +118,6 @@ class Dashboard extends Component {
           alert(
             `Sorry, There was an error in the locations server and application won\'t function \n${error.response.data} \n${error.response.status}`
           );
-        
         } else if (error.request) {
           alert(
             "Sorry, There was an error in the locations server and application won't function"
@@ -127,6 +125,12 @@ class Dashboard extends Component {
         } else {
         }
       });
+  }
+
+  componentDidMount() {
+    this.getProducts();
+
+    this.getLocations();
 
     this.setupDate();
   }
@@ -137,14 +141,10 @@ class Dashboard extends Component {
     const isLoaded = this.state.isLoaded;
     let locations = this.state.locations;
     let products = this.state.products;
-    let productNames = products.map((product) => product.name);
-    productNames.unshift("Please select");
 
     let datePicker = document.getElementById("date-input");
     const locationNameHolder = document.getElementById("location-name");
     const unitCountInput = document.getElementById("unitCount");
-    const unictCountParent = document.getElementById("00");
-
     let productSelect = document.querySelector("#select-product");
     let locationNameText = document.querySelector(".location-name span");
 
@@ -152,6 +152,18 @@ class Dashboard extends Component {
     let productElements = this.state.productElements;
 
     // global variables introduction ended
+
+    const selectedProductHandler = (obj) => {
+      let productID = obj.target.value;
+      if (!productID == 0) {
+        let productIndex = products.findIndex((el) => el.id === productID);
+        toggleDatePicker(ENABLED);
+        this.setState({ currentAddedProduct: products[productIndex] });
+      } else {
+        toggleDatePicker(DISABLED);
+        this.setState({ currentAddedProduct: [] });
+      }
+    }; // log selected product to state
 
     const setSelectedDate = () => {
       let tomorrowDate = this.state.tomorrowDate;
@@ -169,12 +181,9 @@ class Dashboard extends Component {
           calculateDates
         );
       } else {
-        this.setState(
-          {
+        this.setState({
             currentAddedDate: selectedDate,
-          },
-          calculateDates
-        );
+          }, calculateDates );
       }
     };
 
@@ -185,10 +194,7 @@ class Dashboard extends Component {
       let difference = selected - today;
       const diffDays = Math.ceil(difference / (1000 * 60 * 60 * 24));
       this.setState(
-        {
-          daysDifference: diffDays,
-        },
-        togglePlaceNameHolder(ENABLED)
+        {daysDifference: diffDays }, togglePlaceNameHolder(ENABLED)
       );
     };
 
@@ -198,7 +204,6 @@ class Dashboard extends Component {
       let totalUnitsOrdered = calculateNewTotalUnits();
       let maxProd = 0;
       let maxDist = 0;
-      // let currentTotalUnits = calculateNewTotalUnits()
       for (let i = 0; i < Object.keys(maxProductionArray).length; i++) {
         if (difDays == i) {
           maxProd = maxProductionArray[i];
@@ -207,17 +212,11 @@ class Dashboard extends Component {
         }
       }
       let availaToOrder = maxProd - totalUnitsOrdered;
-
       if (availaToOrder > locationMaxDist) {
         maxDist = locationMaxDist;
       } else {
-        if (availaToOrder == 0) {
-          toggleUnitCountInput(DISABLED);
-        } else {
-          maxDist = availaToOrder;
-        }
+        maxDist = availaToOrder;
       }
-
       return maxDist;
     };
     const openProductModal = () => {
@@ -261,21 +260,6 @@ class Dashboard extends Component {
       );
     };
 
-    const selectedProductHandler = () => {
-      let selectedProductValue = productSelect.value;
-
-      if (selectedProductValue && selectedProductValue !== "Please select") {
-        let productIndex = products.findIndex(
-          (el) => el.name === selectedProductValue
-        );
-        toggleDatePicker(ENABLED);
-        this.setState({ currentAddedProduct: products[productIndex] });
-      } else {
-        toggleDatePicker(DISABLED);
-        this.setState({ currentAddedProduct: [] });
-      }
-    };
-
     const calcCost = () => {
       let maxDistValue = this.state.currentMaxDist;
       let unitCountValue = unitCountInput.value;
@@ -291,9 +275,9 @@ class Dashboard extends Component {
         unitCountValue <= maxDistValue &&
         unitCountValue >= 0
       ) {
+        toggleAddBtn(ENABLED);
         this.setState(
           { currentLineCost: lineCost, currentUnitCount: unitCountValue },
-          preFinalChecks
         );
       } else {
         unitCountValue = maxDistValue;
@@ -310,27 +294,11 @@ class Dashboard extends Component {
           alert(
             `You can order up to ${maxDistValue} for distribution on this day`
           ),
-          preFinalChecks
         );
       }
     };
 
-    const preFinalChecks = () => {
-      let product = this.state.currentAddedProduct;
-      let date = this.state.currentAddedDate;
-      let place = this.state.currentAddedLocation;
-      let lineCost = this.state.currentLineCost;
-      let unitCountValue = this.state.currentUnitCount;
-
-      let status = false;
-      if (product && date && place && lineCost && unitCountValue) {
-        status = ENABLED;
-      } else {
-        status = DISABLED;
-      }
-      toggleAddBtn(status);
-    };
-
+    
     // toggelers
 
     const toggleProductSelect = (status) => {
@@ -441,8 +409,6 @@ class Dashboard extends Component {
       };
       addNewProductElement(productInfo, place.id);
       togglePlaceNameHolder(ENABLED);
-      // let newTotalUnits = calculateNewTotalUnits();
-      // let newTotalCost = calculateNewTotalCost();
       updateTotals();
 
       cartLocations.push({ id: place.id, quantity: currentUnitCount });
@@ -468,7 +434,7 @@ class Dashboard extends Component {
     const toggleLocationFromMap = (id, act) => {
       if (id === "all") {
         locations = locations.map((location) => {
-          location.status = "enabled";
+          location.status = true;
           return location;
         });
         this.setState({
@@ -478,7 +444,7 @@ class Dashboard extends Component {
         if (act === "remove") {
           locations = locations.map((location) => {
             if (location.id == id) {
-              location.status = "disabled";
+              location.status = false;
               return location;
             } else {
               return location;
@@ -490,7 +456,7 @@ class Dashboard extends Component {
         } else {
           locations = locations.map((location) => {
             if (location.id == id) {
-              location.status = "enabled";
+              location.status = true;
               return location;
             } else {
               return location;
@@ -578,12 +544,11 @@ class Dashboard extends Component {
       let locationsObj = { locations: cartLocations };
       let postObj = Object.assign(cartProduct[0], locationsObj);
       toggleLoadSpinner(ENABLED);
-      axios
-        .post(CART_API, { postObj })
+      axios.post(CART_API, { postObj })
         .then((res) => {
           clearSelectedValues();
           toggleLoadSpinner(DISABLED);
-          this.props.history.push('/ThankYou');
+          this.props.history.push("/ThankYou");
         })
         .catch((error) => {
           toggleLoadSpinner(DISABLED);
@@ -622,9 +587,10 @@ class Dashboard extends Component {
                     id="select-product"
                     onChange={selectedProductHandler}
                   >
-                    {productNames.map((product, i) => (
-                      <option key={i} value={product}>
-                        {product}
+                    <option value="0">Please Select Product</option>
+                    {this.state.products.map((product, i) => (
+                      <option key={i} value={product.id}>
+                        {product.name}
                       </option>
                     ))}
                   </CSelect>
@@ -727,13 +693,11 @@ class Dashboard extends Component {
               <CRow>
                 {/* tables */}
 
-             
-                  <DataTable
-                    fields={fields}
-                    items={productElements}
-                    click={removeSelectedProduct}
-                  ></DataTable>
-              
+                <DataTable
+                  fields={fields}
+                  items={productElements}
+                  click={removeSelectedProduct}
+                ></DataTable>
               </CRow>
               {/* / table */}
               {/* Totals */}

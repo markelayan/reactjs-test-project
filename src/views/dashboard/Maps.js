@@ -107,7 +107,7 @@ function Map(props) {
           }}
         >
           {myPlaces.map((place) => {
-            if (place.status == "enabled") {
+            
               return (
                 <Marker
                   key={place.id}
@@ -117,9 +117,10 @@ function Map(props) {
                 />
               );
             }
-          })}
+          )}
 
           {infoOpen && selectedPlace && (
+            
             <InfoWindow
               anchor={markerMap[selectedPlace.id]}
               onCloseClick={() => setInfoOpen(false)}
@@ -128,7 +129,8 @@ function Map(props) {
                 <h5>{selectedPlace.name}</h5>
                 <p>Max Units: {selectedPlace.max_dist}</p>
                 <p>fee: {selectedPlace.fee}</p>
-                <button onClick={updateIndex.bind(this, selectedPlace.id)}>
+                
+                <button disabled={!selectedPlace.status} onClick={updateIndex.bind(this, selectedPlace.id)}>
                   {" "}
                   Add
                 </button>
