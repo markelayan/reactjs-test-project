@@ -464,6 +464,13 @@ class Dashboard extends Component {
 
     const removeSelectedProduct = (i, id) => {
       this.state.productElements.splice(i, 1);
+      let productElm = this.state.productElements
+      if (productElm.length== 0){
+        this.setState({
+          canReset:false,
+          canSubmit: false,
+        })
+      }
       updateTotals();
       toggleLocationFromMap(id, "enable");
       let newMaxOrder = calculateMaxOrder();
@@ -638,7 +645,6 @@ class Dashboard extends Component {
                   <CLabel className="place-list-h" htmlFor="unit-count">
                     Unit Count
                   </CLabel>
-                  <div id="00">
                     <CInput
                       id="unitCount"
                       name="units"
@@ -649,7 +655,6 @@ class Dashboard extends Component {
                       min="1"
                       disabled
                     />
-                  </div>
                 </CCol>
                 {/* /unit Count */}
                 {/* units cost */}

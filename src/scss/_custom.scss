@@ -71,6 +71,9 @@
   font-weight: 700;
 }
 
+.form-control {
+  min-width: 183px;
+}
 @media only screen and (max-width: 600px) {
   .place-list-h {
     margin-right: 1em;
